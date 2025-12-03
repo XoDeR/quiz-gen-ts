@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import type { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from "react";
 
 export default function Quizzes() {
   // tanstack query example usage
