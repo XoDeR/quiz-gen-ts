@@ -1,12 +1,29 @@
-import { Button } from "@/components/ui/button"
 import './App.css'
 
-function App() {
+import { Routes, Route } from "react-router";
+import AuthLayout from "./layouts/AuthLayout";
+import ProtectedLayout from "./layouts/ProtectedLayout";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Quizzes from "./pages/Quizzes";
+import CreatedQuizzes from "./pages/CreatedQuizzes";
+
+export default function App() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button>Click me</Button>
-    </div>
-  )
+    <Routes>
+      {/* Public routes */}
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
+
+      {/* Protected routes */}
+      <Route element={<ProtectedLayout />}>
+        <Route path="/" element={<Quizzes />} />
+        <Route path="/created-quizzes" element={<CreatedQuizzes />} />
+      </Route>
+    </Routes>
+  );
 }
 
-export default App
+
