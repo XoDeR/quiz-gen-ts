@@ -2,7 +2,9 @@ import { Outlet, Navigate } from "react-router";
 
 // TODO replace with real auth check
 const isAuthenticated = () => {
-  return !!localStorage.getItem("token");
+  // TODO temp
+  // return !!localStorage.getItem("token");
+  return true;
 };
 
 export default function ProtectedLayout() {
@@ -12,7 +14,10 @@ export default function ProtectedLayout() {
 
   return (
     <div className="protected-layout">
-      <h1>Protected Area</h1>
+      <div className="w-full h-16 bg-gray-300">
+        <h1>Protected Area</h1>
+      </div>
+
       {/* Shared for protected pages */}
       <Outlet />
     </div>
