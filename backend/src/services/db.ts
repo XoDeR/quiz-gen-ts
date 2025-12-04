@@ -64,26 +64,48 @@ export async function initDb() {
         created_at TIMESTAMPTZ DEFAULT now(),
         updated_at TIMESTAMPTZ DEFAULT now()
       )`;
-    /*
-  // questions
-  CREATE TABLE questions (
-    id UUID PRIMARY KEY,
-    quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
-    text TEXT NOT NULL
-  );
-  // question_options
-  CREATE TABLE question_options (
-    id UUID PRIMARY KEY,
-    question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-    option_text TEXT NOT NULL
-  );
-  // correct_answers
-  CREATE TABLE correct_answers (
-    id UUID PRIMARY KEY,
-    question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-    option_id UUID NOT NULL REFERENCES question_options(id) ON DELETE CASCADE
-  );
-  */
+    // questions
+    await sql
+      `CREATE TABLE IF NOT EXISTS questions(
+        id UUID PRIMARY KEY,
+        text TEXT NOT NULL,
+        type SMALLINT DEFAULT 0,
+        display_order INT DEFAULT 0,
+        quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE
+      )`;
+    // answer_options
+    await sql
+      `CREATE TABLE IF NOT EXISTS answer_options(
+        id UUID PRIMARY KEY,
+        text TEXT NOT NULL,
+        display_order INT DEFAULT 0,
+        question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE
+      )`;
+    // correct_answers
+    await sql
+      `CREATE TABLE IF NOT EXISTS correct_answers(
+        id UUID PRIMARY KEY,
+        question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+        answer_option_id UUID NOT NULL REFERENCES answer_options(id) ON DELETE CASCADE
+      )`;
+    // submissions
+    await sql
+      `CREATE TABLE IF NOT EXISTS submissions(
+        id UUID PRIMARY KEY,
+        result VARCHAR(255) DEFAULT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE
+      )`;
+    // attempted_answers
+    await sql
+      `CREATE TABLE IF NOT EXISTS attempted_answers(
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+        submission_id UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+        question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+        answer_option_id UUID NOT NULL REFERENCES answer_options(id) ON DELETE CASCADE
+      )`;
 
     console.log("DB initted successfully")
   } catch (error) {

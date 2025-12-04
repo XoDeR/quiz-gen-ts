@@ -10,6 +10,11 @@ import {
 import { getSubmittedColumns, type SubmittedQuiz } from "./SubmittedColumns"
 import { DataTable } from "./SubmittedDataTable"
 
+// data needed:
+// query getSubmissionWithQuizByUserId(userId)
+// returns:
+// [{ quiz.id, quiz.title, submission.updated_at, submission.result }, {}]
+
 function getData(): SubmittedQuiz[] {
   // Fetch data from your API here.
   return [
