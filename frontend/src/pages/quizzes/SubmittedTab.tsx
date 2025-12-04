@@ -10,10 +10,14 @@ import {
 import { getSubmittedColumns, type SubmittedQuiz } from "./SubmittedColumns"
 import { DataTable } from "./SubmittedDataTable"
 
+import { useNavigate } from 'react-router';
+
 // data needed:
 // query getSubmissionWithQuizByUserId(userId)
 // returns:
 // [{ quiz.id, quiz.title, submission.updated_at, submission.result }, {}]
+
+
 
 function getData(): SubmittedQuiz[] {
   // Fetch data from your API here.
@@ -46,10 +50,16 @@ function getData(): SubmittedQuiz[] {
 }
 
 export default function SubmittedTab() {
+  const navigate = useNavigate();
+
   const data = getData()
 
   const handleOpenQuiz = (quizId: string) => {
     console.log(`Opening quiz with ID: ${quizId}`);
+
+    const status = "submitted";
+    const path = `/quizzes/${quizId}/view?status=${status}`;
+    navigate(path);
   }
 
   const columns = getSubmittedColumns(handleOpenQuiz);

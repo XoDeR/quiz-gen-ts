@@ -7,6 +7,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Quizzes from "./pages/Quizzes";
 import CreatedQuizzes from "./pages/CreatedQuizzes";
+import QuizCreate from './pages/quiz/QuizCreate';
+import QuizLayout from './pages/quiz/QuizLayout';
+import QuizView from './pages/quiz/QuizView';
+import QuizEdit from './pages/quiz/QuizEdit';
 
 export default function App() {
   return (
@@ -21,6 +25,13 @@ export default function App() {
       <Route element={<ProtectedLayout />}>
         <Route path="/" element={<Quizzes />} />
         <Route path="/created-quizzes" element={<CreatedQuizzes />} />
+
+        <Route path="/quizzes/create" element={<QuizCreate />} />
+
+        <Route path="/quizzes/:quizId" element={<QuizLayout />}>
+          <Route path="view" element={<QuizView />} />
+          <Route path="edit" element={<QuizEdit />} />
+        </Route>
       </Route>
     </Routes>
   );
