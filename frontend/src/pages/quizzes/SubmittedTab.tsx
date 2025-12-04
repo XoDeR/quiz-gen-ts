@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import { columns, type SubmittedQuiz } from "./SubmittedColumns"
+import { getSubmittedColumns, type SubmittedQuiz } from "./SubmittedColumns"
 import { DataTable } from "./SubmittedDataTable"
 
 function getData(): SubmittedQuiz[] {
@@ -42,6 +42,12 @@ function getData(): SubmittedQuiz[] {
 
 export default function SubmittedTab() {
   const data = getData()
+
+  const handleOpenQuiz = (quizId: string) => {
+    console.log(`Opening quiz with ID: ${quizId}`);
+  }
+
+  const columns = getSubmittedColumns(handleOpenQuiz);
 
   return (
     <Card>
