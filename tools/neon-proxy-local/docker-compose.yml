@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  # This image includes the Neon Proxy and the necessary Caddy server
+  # to handle the WSS connection with the Neon Serverless Driver locally.
+  neon-local-proxy:
+    image: ghcr.io/timowilhelm/local-neon-http-proxy:main
+    container_name: neon-proxy-bridge
+    # The proxy will listen on port 4444 on the host machine.
+    # The application connects via http://db.localtest.me:4444 or wss://db.localtest.me:4444
+    ports:
+      - "4444:4444"
+    environment:
+      # CRITICAL: This points the proxy to your already running PostgreSQL instance (on the host).
+      # Format: postgresql://<user>:<password>@<host>:<port>/<database_name>
+      PG_CONNECTION_STRING: "postgresql://postgres:my_canvas_pass@host.docker.internal:5432/quiz-gen-ts"
+      # This is the address the proxy listens on *inside* the container
+      LISTEN_ADDR: "0.0.0.0:4444"
+    # Ensures the container can resolve the host machine's IP
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
