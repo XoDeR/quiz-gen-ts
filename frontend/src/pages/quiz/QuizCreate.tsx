@@ -1,6 +1,9 @@
+import QuizCreateTest4 from "./QuizCreateTest4";
+
 export default function QuizCreate() {
   return (
     <div className="w-full">
+      <QuizCreateTest4 />
       <h1 className="text-3xl">Create New Quiz</h1>
       <div className="p-20 border rounded-md">
         <div>
