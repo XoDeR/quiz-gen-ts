@@ -1,21 +1,18 @@
-import QuizCreateTest4 from "./QuizCreateTest4";
+import QuizEditor from "@/components/quiz/QuizEditor";
+import type { OriginalQuizData } from "@/interfaces";
+
+const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
+  title: "",
+  isPublished: false,
+  questions: [
+  ]
+};
 
 export default function QuizCreate() {
   return (
-    <div className="w-full">
-      <QuizCreateTest4 />
-      <h1 className="text-3xl">Create New Quiz</h1>
-      <div className="p-20 border rounded-md">
-        <div>
-          <h3 className="text-xl">1. When JS was invented</h3>
-          <input type="radio" id="html" name="fav_language" value="HTML" />
-          <label htmlFor="html">HTML</label><br />
-          <input type="radio" id="css" name="fav_language" value="CSS" />
-          <label htmlFor="css">CSS</label><br />
-          <input type="radio" id="javascript" name="fav_language" value="JavaScript" />
-          <label htmlFor="javascript">JavaScript</label>
-        </div>
-
+    <div className="min-h-screen bg-zinc-50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-zinc-900">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <QuizEditor />
       </div>
     </div>
   );
