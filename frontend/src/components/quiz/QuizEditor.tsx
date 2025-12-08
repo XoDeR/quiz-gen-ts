@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { CheckCircle2, CheckSquare, Circle, Plus, Square, Trash2, X } from "lucide-react";
+import { CheckCircle2, CheckSquare, Circle, GripVertical, Plus, Square, Trash2, X } from "lucide-react";
 import { Switch } from "../ui/switch";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -245,6 +245,13 @@ const QuizEditor = ({
             <div className="flex flex-col sm:flex-row gap-4 p-6 border-b border-zinc-100 items-start sm:items-center justify-between bg-zinc-50/50 rounded-t-xl">
               <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
 
+                {/* Question drag handle */}
+                <div
+                  className="drag-handle cursor-grab active:cursor-grabbing hover:bg-zinc-200 h-8 w-8 rounded-full shrink-0 flex items-center justify-center transition-colors"
+                  title="Drag to reorder question"
+                >
+                  <GripVertical size={20} className="text-zinc-500" />
+                </div>
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white">
                   {index + 1}
                 </div>
@@ -293,6 +300,14 @@ const QuizEditor = ({
                   key={ao.id}
                   className="flex items-center bg-white border border-transparent answerOption-item transition-all duration-100"
                 >
+                  {/* Answer Option drag handle */}
+                  <div
+                    className="drag-handle cursor-grab active:cursor-grabbing hover:bg-zinc-500 w-6 h-8 rounded-md shrink-0 transition-colors mr-3 flex items-center justify-center"
+                    title="Drag to reorder"
+                  >
+                    <GripVertical size={16} className="text-zinc-700" />
+                  </div>
+
                   {/* Visual Toggle for Correct Answer */}
                   <button
                     onClick={() => toggleCorrectAnswer(q.id, ao.id)}
