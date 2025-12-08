@@ -84,6 +84,12 @@ export default function QuizEdit() {
   return (
     <div className="min-h-screen bg-zinc-50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-zinc-900">
       <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Edit Quiz</h1>
+          <p className="text-zinc-500">Edit questions, reorder items, and mark correct answers.</p>
+        </div>
+
         <QuizEditor
           originalQuizEditorState={MOCK_ORIGINAL_QUIZ_DATA}
           discardEventId={discardEventId}
