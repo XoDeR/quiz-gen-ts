@@ -1,5 +1,7 @@
 import type { AnswerOption, OriginalQuizData, Question } from "@/interfaces";
 import { useEffect, useState } from "react";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
 
 type SaveResult =
   | { success: true; data: any }
@@ -104,6 +106,16 @@ const QuizEditor = ({
 
   return (
     <div>
+      {/* Title Input */}
+      <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
+        <Label className="mb-2 block">Quiz Title</Label>
+        <Input
+          value={quizTitle}
+          onChange={(e) => setQuizTitle(e.target.value)}
+          placeholder="Quiz title"
+          className="text-lg font-medium"
+        />
+      </div>
       QuizEditor
     </div>
 
