@@ -1,5 +1,5 @@
 import type { AnswerOption, OriginalQuizData, Question } from "@/interfaces";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -220,6 +220,196 @@ const QuizEditor = ({
   };
   //-- Functions to update state
 
+  // Drag&drop functions
+  interface DragItemRef {
+    type: 'question' | 'answerOption';
+    index: number;
+    parentId: string | null;
+  }
+
+  const dragItem = useRef<DragItemRef | null>(null);
+
+  const getDropTarget = (e: DragEvent<HTMLElement>): 'above' | 'below' => {
+    const targetEl = e.currentTarget;
+    const rect = targetEl.getBoundingClientRect();
+    const mouseY = e.clientY;
+    return (mouseY < rect.top + rect.height / 2) ? 'above' : 'below';
+  };
+
+  const removeHighlight = (targetEl: HTMLElement | null): void => {
+    if (!targetEl || !(targetEl instanceof HTMLElement)) return;
+    targetEl.classList.remove('border-t', 'border-b', 'border-2', 'border-dashed', 'border-zinc-400');
+  };
+
+  const highlightDropTarget = (e: DragEvent<HTMLElement>, position: 'above' | 'below'): void => {
+    const targetEl = e.currentTarget;
+    const highlightClass = 'border-2 border-dashed border-zinc-400';
+    if (!targetEl) return;
+    removeHighlight(targetEl);
+    if (position === 'above') {
+      targetEl.classList.add('border-t', highlightClass);
+    } else {
+      targetEl.classList.add('border-b', highlightClass);
+    }
+  };
+
+  const onDragStart = (e: DragEvent<HTMLElement>, type: 'question' | 'answerOption', index: number, parentId: string | null = null): void => {
+    const draggableContainer = e.currentTarget as HTMLElement;
+    const dragHandle = draggableContainer.querySelector('.drag-handle');
+
+    if (!dragHandle) {
+      e.preventDefault();
+      return;
+    }
+
+    const handleRect = dragHandle.getBoundingClientRect();
+    const isClickInHandle = (
+      e.clientX >= handleRect.left && e.clientX <= handleRect.right &&
+      e.clientY >= handleRect.top && e.clientY <= handleRect.bottom
+    );
+
+    if (!isClickInHandle) {
+      e.preventDefault();
+      return;
+    }
+
+    e.stopPropagation();
+    dragItem.current = { type, index, parentId };
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", JSON.stringify(dragItem.current));
+    // opacity and shadow are added to the dragged item
+    (e.currentTarget as HTMLElement).classList.add('opacity-40', 'shadow-xl');
+  };
+
+  const onDragEnd = (e: DragEvent<HTMLElement>): void => {
+    // clean up drop targets (remove borders)
+    document.querySelectorAll('.answerOption-item, .question-item').forEach(el => removeHighlight(el as HTMLElement));
+
+    // clean up the dragged item (remove opacity and shadow)
+    e.currentTarget.classList.remove('opacity-40', 'shadow-xl');
+
+    dragItem.current = null;
+  };
+
+  const onDragOverAnswerOption = (e: DragEvent<HTMLElement>): void => {
+    e.preventDefault();
+    if (dragItem.current && dragItem.current.type === 'answerOption') {
+      const target = getDropTarget(e);
+      highlightDropTarget(e, target);
+      e.dataTransfer.dropEffect = "move";
+    }
+  };
+
+  const onDragLeaveAnswerOption = (e: DragEvent<HTMLElement>): void => {
+    if (e.relatedTarget && (e.relatedTarget as HTMLElement).closest('.answerOption-item') === e.currentTarget) {
+      return;
+    }
+    removeHighlight(e.currentTarget as HTMLElement);
+  };
+
+  const handleDropAnswerOption = (qId: string, dropIndex: number, position: 'above' | 'below'): void => {
+    const draggedItem = dragItem.current;
+
+    if (!draggedItem || draggedItem.type !== 'answerOption' || draggedItem.parentId !== qId) {
+      return;
+    }
+
+    const questionIndex = questions.findIndex(q => q.id === qId);
+    if (questionIndex === -1) return;
+
+    const currentAnswerOptions = [...questions[questionIndex].answerOptions];
+    const sourceIndex = draggedItem.index;
+
+    let finalDropIndex = dropIndex;
+    if (position === 'below') {
+      finalDropIndex += 1;
+    }
+
+    if (sourceIndex < finalDropIndex) {
+      finalDropIndex -= 1;
+    }
+
+    const [movedAnswerOption] = currentAnswerOptions.splice(sourceIndex, 1);
+    currentAnswerOptions.splice(finalDropIndex, 0, movedAnswerOption);
+
+    setQuestions(prevQuestions => prevQuestions.map((q, i) =>
+      i === questionIndex ? { ...q, answerOptions: currentAnswerOptions } : q
+    ));
+
+    dragItem.current = null;
+  };
+
+  const onDropAnswerOption = (e: DragEvent<HTMLElement>, qId: string, targetIndex: number): void => {
+    e.preventDefault();
+    const position = getDropTarget(e);
+    removeHighlight(e.currentTarget as HTMLElement);
+
+    if (dragItem.current && dragItem.current.type === 'answerOption' && dragItem.current.parentId === qId) {
+      handleDropAnswerOption(qId, targetIndex, position);
+    }
+  };
+
+  const onDragOverQuestion = (e: DragEvent<HTMLElement>): void => {
+    e.preventDefault();
+    if (dragItem.current && dragItem.current.type === 'answerOption') {
+      return;
+    }
+    if (dragItem.current && dragItem.current.type === 'question') {
+      const target = getDropTarget(e);
+      highlightDropTarget(e, target);
+      e.dataTransfer.dropEffect = "move";
+    }
+  };
+
+  const onDragLeaveQuestion = (e: DragEvent<HTMLElement>): void => {
+    if (e.relatedTarget && (e.relatedTarget as HTMLElement).closest('.question-item') === e.currentTarget) {
+      return;
+    }
+    removeHighlight(e.currentTarget as HTMLElement);
+  };
+
+  const handleDropQuestion = (dropIndex: number, position: 'above' | 'below'): void => {
+    const draggedItem = dragItem.current;
+
+    if (!draggedItem || draggedItem.type !== 'question') {
+      return;
+    }
+
+    const currentQuestions = [...questions];
+    const [draggedQuestion] = currentQuestions.splice(draggedItem.index, 1);
+
+    let newIndex = dropIndex;
+    if (position === 'below') {
+      newIndex = dropIndex + 1;
+    }
+
+    if (draggedItem.index < newIndex) {
+      newIndex -= 1;
+    }
+
+    currentQuestions.splice(newIndex, 0, draggedQuestion);
+    setQuestions(currentQuestions);
+
+    dragItem.current = null;
+  };
+
+  const onDropQuestion = (e: DragEvent<HTMLElement>, targetIndex: number): void => {
+    e.preventDefault();
+
+    if (dragItem.current && dragItem.current.type === 'answerOption') {
+      removeHighlight(e.currentTarget as HTMLElement);
+      return;
+    }
+
+    const position = getDropTarget(e);
+    removeHighlight(e.currentTarget as HTMLElement);
+
+    if (dragItem.current && dragItem.current.type === 'question') {
+      handleDropQuestion(targetIndex, position);
+    }
+  };
+  //-- Drag&drop functions
+
   return (
     <div>
       {/* Title Input */}
@@ -238,6 +428,12 @@ const QuizEditor = ({
         {questions.map((q, index) => (
           <div
             key={q.id}
+            draggable
+            onDragStart={(e) => onDragStart(e, 'question', index, null)}
+            onDragEnd={onDragEnd}
+            onDragOver={onDragOverQuestion}
+            onDragLeave={onDragLeaveQuestion}
+            onDrop={(e) => onDropQuestion(e, index)}
             className="group relative bg-white rounded-xl border border-zinc-200 shadow-sm transition-all hover:shadow-lg question-item"
           >
 
@@ -298,6 +494,12 @@ const QuizEditor = ({
               {q.answerOptions.map((ao, aoIndex) => (
                 <div
                   key={ao.id}
+                  draggable
+                  onDragStart={(e) => onDragStart(e, 'answerOption', aoIndex, q.id)}
+                  onDragEnd={onDragEnd}
+                  onDragOver={onDragOverAnswerOption}
+                  onDragLeave={onDragLeaveAnswerOption}
+                  onDrop={(e) => onDropAnswerOption(e, q.id, aoIndex)}
                   className="flex items-center bg-white border border-transparent answerOption-item transition-all duration-100"
                 >
                   {/* Answer Option drag handle */}
