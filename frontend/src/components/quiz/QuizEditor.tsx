@@ -2,6 +2,10 @@ import type { AnswerOption, OriginalQuizData, Question } from "@/interfaces";
 import { useEffect, useState } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { CheckCircle2, CheckSquare, Circle, Plus, Square, Trash2, X } from "lucide-react";
+import { Switch } from "../ui/switch";
+import { v4 as uuidv4 } from 'uuid';
 
 type SaveResult =
   | { success: true; data: any }
@@ -104,6 +108,118 @@ const QuizEditor = ({
   const [quizTitle, setQuizTitle] = useState(originalTitle);
   const [questions, setQuestions] = useState<Question[]>(originalQuestions);
 
+  // Functions to update state
+
+  // Questions
+  const addQuestion = (): void => {
+    const newId = uuidv4();
+    setQuestions((prevQuestions) => [
+      ...prevQuestions,
+      {
+        id: newId,
+        text: "",
+        type: "single",
+        answerOptions: [{
+          id: uuidv4(),
+          text: "",
+          isCorrect: false,
+          correctAnswerId: null
+        }]
+      }
+    ]);
+  };
+
+  const removeQuestion = (qId: string): void => {
+    setQuestions((prevQuestions) => prevQuestions.filter(q => q.id !== qId));
+  };
+
+  const updateQuestionText = (qId: string, text: string): void => {
+    setQuestions((prevQuestions) => prevQuestions.map(q => q.id === qId ? { ...q, text } : q));
+  };
+
+  const toggleQuestionType = (qId: string): void => {
+    setQuestions((prevQuestions) => prevQuestions.map(q => {
+      if (q.id === qId) {
+        const newType = q.type === 'single' ? 'multiple' : 'single';
+        let foundCorrect = false;
+        const newAnswerOptions = q.answerOptions.map(ao => {
+          if (newType === 'single') {
+            // only the first correct answer remains correct
+            if (ao.isCorrect && !foundCorrect) {
+              foundCorrect = true;
+              return ao;
+            }
+            // clear correctness status for others
+            return { ...ao, isCorrect: false, correctAnswerId: null };
+          }
+          return ao;
+        });
+        return { ...q, type: newType, answerOptions: newAnswerOptions };
+      }
+      return q;
+    }));
+  };
+
+  // AnswerOptions
+  const addAnswerOption = (qId: string): void => {
+    setQuestions((prevQuestions) => prevQuestions.map(q => {
+      if (q.id === qId) {
+        return {
+          ...q,
+          answerOptions: [...q.answerOptions, { id: uuidv4(), text: "", isCorrect: false, correctAnswerId: null }]
+        };
+      }
+      return q;
+    }));
+  };
+
+  const removeAnswerOption = (qId: string, aoId: string): void => {
+    setQuestions((prevQuestions) => prevQuestions.map(q => {
+      if (q.id === qId) {
+        return { ...q, answerOptions: q.answerOptions.filter(ao => ao.id !== aoId) };
+      }
+      return q;
+    }));
+  };
+
+  const updateAnswerOptionText = (qId: string, aoId: string, text: string): void => {
+    setQuestions((prevQuestions) => prevQuestions.map(q => {
+      if (q.id === qId) {
+        return {
+          ...q,
+          answerOptions: q.answerOptions.map(ao => ao.id === aoId ? { ...ao, text } : ao)
+        };
+      }
+      return q;
+    }));
+  };
+
+  const toggleCorrectAnswer = (qId: string, aoId: string): void => {
+    setQuestions((prevQuestions) => prevQuestions.map(q => {
+      if (q.id === qId) {
+        const isSingle = q.type === 'single';
+        return {
+          ...q,
+          answerOptions: q.answerOptions.map(ao => {
+            if (ao.id === aoId) {
+              const becomingCorrect = isSingle ? true : !ao.isCorrect;
+
+              // correct answer id is needed here to track whether a "create" or "keep" operation is needed
+              // the client generated id will be in any case replaced on the server side
+              const newCAId = becomingCorrect ? (ao.correctAnswerId || uuidv4()) : null;
+
+              return { ...ao, isCorrect: becomingCorrect, correctAnswerId: newCAId };
+            }
+            // in single mode, uncheck everyone else and clear their correct answers
+            return isSingle ? { ...ao, isCorrect: false, correctAnswerId: null } : ao;
+          })
+        };
+      }
+      return q;
+    }));
+  };
+  //-- Functions to update state
+
   return (
     <div>
       {/* Title Input */}
@@ -116,7 +232,129 @@ const QuizEditor = ({
           className="text-lg font-medium"
         />
       </div>
-      QuizEditor
+
+      {/* Questions List */}
+      <div className="space-y-6">
+        {questions.map((q, index) => (
+          <div
+            key={q.id}
+            className="group relative bg-white rounded-xl border border-zinc-200 shadow-sm transition-all hover:shadow-lg question-item"
+          >
+
+            {/* Question Header */}
+            <div className="flex flex-col sm:flex-row gap-4 p-6 border-b border-zinc-100 items-start sm:items-center justify-between bg-zinc-50/50 rounded-t-xl">
+              <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
+
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white">
+                  {index + 1}
+                </div>
+                <div className="flex-1">
+                  <Label className="sr-only">Question Text</Label>
+                  <Input
+                    value={q.text}
+                    onChange={(e) => updateQuestionText(q.id, e.target.value)}
+                    placeholder="Enter the question..."
+                    className="bg-white md:text-lg"
+                  />
+                  {/* <span className="text-xs text-zinc-400 mt-1 block">Question id: {q.id}</span> */}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${q.type === 'single' ? 'text-zinc-900' : 'text-zinc-400'}`}>Single</span>
+                  <Switch
+                    checked={q.type === 'multiple'}
+                    onCheckedChange={() => toggleQuestionType(q.id)}
+                  />
+                  <span className={`text-xs font-medium ${q.type === 'multiple' ? 'text-zinc-900' : 'text-zinc-400'}`}>Multiple</span>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => removeQuestion(q.id)}
+                  className="text-zinc-400 hover:text-red-600 hover:bg-red-50"
+                  title="Delete Question"
+                >
+                  <Trash2 size={18} />
+                </Button>
+              </div>
+            </div>
+
+            {/* Answer Options */}
+            <div className="p-6 space-y-3 options-container">
+              <Label className="text-xs uppercase tracking-wider text-zinc-500 mb-2 block">
+                Answer Options
+              </Label>
+
+              {q.answerOptions.map((ao, aoIndex) => (
+                <div
+                  key={ao.id}
+                  className="flex items-center bg-white border border-transparent answerOption-item transition-all duration-100"
+                >
+                  {/* Visual Toggle for Correct Answer */}
+                  <button
+                    onClick={() => toggleCorrectAnswer(q.id, ao.id)}
+                    className={`shrink-0 transition-colors mr-3 ${ao.isCorrect ? 'text-green-600' : 'text-zinc-300 hover:text-zinc-400'}`}
+                    title={ao.isCorrect ? "Correct Answer" : "Mark as Correct"}
+                  >
+                    {q.type === 'single' ? (
+                      ao.isCorrect ? <CheckCircle2 size={24} /> : <Circle size={24} />
+                    ) : (
+                      q.type === 'multiple' ? (ao.isCorrect ? <CheckSquare size={24} /> : <Square size={24} />) : <></>
+                    )}
+                  </button>
+
+                  <div className='flex-1'>
+                    <Input
+                      value={ao.text}
+                      onChange={(e) => updateAnswerOptionText(q.id, ao.id, e.target.value)}
+                      placeholder={`Answer Option ${aoIndex + 1}`}
+                      className={`w-full ${ao.isCorrect ? 'border-green-200 bg-green-50/30 focus-visible:ring-green-500' : ''}`}
+                    />
+                    {/* <span className="text-xs text-zinc-400 mt-1 block">
+                      Answer Option: {ao.id}
+                      {ao.correctAnswerId && <span className="text-blue-500 ml-2">(CA ID: {ao.correctAnswerId.startsWith('temp-') ? 'NEW' : ao.correctAnswerId})</span>}
+                    </span> */}
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => removeAnswerOption(q.id, ao.id)}
+                    className="text-zinc-400 hover:text-red-500 ml-3"
+                    disabled={q.answerOptions.length <= 1}
+                  >
+                    <X size={16} />
+                  </Button>
+                </div>
+              ))}
+
+              <div className="pt-2 pl-12">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addAnswerOption(q.id)}
+                  className="gap-2 text-zinc-600"
+                >
+                  <Plus size={14} /> Add Answer Option
+                </Button>
+              </div>
+            </div>
+
+          </div>
+        ))}
+      </div>
+
+      {/* "Add Question" button */}
+      <Button
+        variant="outline"
+        onClick={addQuestion}
+        className="w-full py-8 border-dashed border-2 text-zinc-500 hover:text-zinc-900 hover:border-zinc-400 gap-2 text-lg h-auto"
+      >
+        <Plus size={24} /> Add New Question
+      </Button>
     </div>
 
   )
