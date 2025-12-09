@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { initDb } from "./services/db";
 import authRoutes from "./routes/authRoutes";
 import quizRoutes from "./routes/quizRoutes";
@@ -11,6 +12,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 // For testing, health check
 app.get("/health", (req, res) => {
