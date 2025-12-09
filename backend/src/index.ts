@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import { initDb } from "./services/db";
-//import authRoutes from "./routes/authRoutes";
+import authRoutes from "./routes/authRoutes";
 import quizRoutes from "./routes/quizRoutes";
 
 dotenv.config();
@@ -17,7 +17,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Test: server works" });
 });
 
-//app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/quizzes", quizRoutes);
 
 const PORT = process.env.PORT || 5002;
