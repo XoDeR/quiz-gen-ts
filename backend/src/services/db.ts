@@ -54,6 +54,21 @@ export async function initDb() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(), -- record creation time
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()  -- record update time
       )`;
+
+    // refresh_tokens
+    await sql
+      `CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),            -- unique identifier for each token row
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- foreign key to users table
+        token_hash VARCHAR(255) NOT NULL UNIQUE,                  -- required + unique
+        jti VARCHAR(255) NOT NULL,                                -- required
+        expires_at TIMESTAMPTZ NOT NULL,                          -- required
+        revoked_at TIMESTAMPTZ DEFAULT NULL,                      -- nullable
+        replaced_by VARCHAR(255) DEFAULT NULL,                    -- new jti when rotated
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),            -- record creation time
+        ip VARCHAR(255),                                          -- optional
+        user_agent TEXT                                           -- optional
+      )`;
     // quizzes
     await sql
       `CREATE TABLE IF NOT EXISTS quizzes(
