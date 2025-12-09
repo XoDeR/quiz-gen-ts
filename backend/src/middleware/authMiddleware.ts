@@ -19,7 +19,13 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as MyJwtPayload;
     (req as any).user = { id: decoded.id, email: decoded.email };
     next();
-  } catch (error) {
-    res.status(401).json({ error: "Token is not valid" });
+  } catch (err) {
+    let msg = "Invalid token";
+
+    if (err instanceof Error) {
+      msg = err.name === "TokenExpiredError" ? "Access token expired" : "Invalid token";
+    }
+
+    return res.status(401).json({ message: msg });
   }
 };
