@@ -1,8 +1,6 @@
 import { neon, neonConfig } from "@neondatabase/serverless";
 import ws from 'ws';
 
-import "dotenv/config"; // does the same as import dotenv + call dotenv.config()
-
 const dbUrl = process.env.DATABASE_URL;
 
 // Determine if we are connecting to the local Docker proxy setup.

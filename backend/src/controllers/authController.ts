@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import { sql } from "../services/db";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
-import "dotenv/config"; // does the same as import dotenv + call dotenv.config()
 
 // Routes:
 // /register

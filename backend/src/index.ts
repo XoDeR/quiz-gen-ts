@@ -1,12 +1,10 @@
-import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { initDb } from "./services/db";
 import authRoutes from "./routes/authRoutes";
 import quizRoutes from "./routes/quizRoutes";
-
-dotenv.config();
+import "dotenv/config"; // does the same as import dotenv + call dotenv.config()
 
 const app = express();
 
