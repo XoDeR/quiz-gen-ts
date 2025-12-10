@@ -1,14 +1,29 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import "dotenv/config"; // does the same as import dotenv + call dotenv.config()
 import { initDb } from "./services/db";
 import authRoutes from "./routes/authRoutes";
 import quizRoutes from "./routes/quizRoutes";
-import "dotenv/config"; // does the same as import dotenv + call dotenv.config()
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:5173",       // dev
+  "https://myapp.com",         // production
+  "https://staging.myapp.com", // optional
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 
