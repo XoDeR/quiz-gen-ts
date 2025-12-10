@@ -1,4 +1,5 @@
 import { useState } from "react"
+import axios from "axios";
 
 export default function Login() {
   /*
@@ -22,23 +23,66 @@ export default function Login() {
 
   const register = async () => {
     // route: http://localhost:5002/api/auth/register
+    try {
+      const response = await axios.post("http://localhost:5002/api/auth/register", {
+        username: "demoUser",
+        email: "demo@example.com",
+        password: "secret123",
+      });
+      setRes(response.data.message);
+    } catch (err: any) {
+      setRes(err.response?.data?.message || "Register failed");
+    }
 
   }
 
   const login = async () => {
     // route: http://localhost:5002/api/auth/login
+    try {
+      const response = await axios.post("http://localhost:5002/api/auth/login", {
+        email: "demo@example.com",
+        password: "secret123",
+      });
+      setRes(response.data.message);
+    } catch (err: any) {
+      setRes(err.response?.data?.message || "Login failed");
+    }
   }
 
   const me = async () => {
     // route: http://localhost:5002/api/auth/me
+    try {
+      const response = await axios.get("http://localhost:5002/api/auth/me", {
+        withCredentials: true, // include cookies
+      });
+      setRes(response.data.message || JSON.stringify(response.data));
+    } catch (err: any) {
+      setRes(err.response?.data?.message || "Me failed");
+    }
   }
 
   const refresh = async () => {
     // route: http://localhost:5002/api/auth/refresh
+    try {
+      const response = await axios.post("http://localhost:5002/api/auth/refresh", {}, {
+        withCredentials: true,
+      });
+      setRes(response.data.message);
+    } catch (err: any) {
+      setRes(err.response?.data?.message || "Refresh failed");
+    }
   }
 
   const logout = async () => {
     // route: http://localhost:5002/api/auth/logout
+    try {
+      const response = await axios.post("http://localhost:5002/api/auth/logout", {}, {
+        withCredentials: true,
+      });
+      setRes(response.data.message);
+    } catch (err: any) {
+      setRes(err.response?.data?.message || "Logout failed");
+    }
   }
 
   return (
@@ -51,7 +95,7 @@ export default function Login() {
           <button onClick={me} className="border rounded-sm p-2">Me</button>
           <button onClick={refresh} className="border rounded-sm p-2">Refresh</button>
           <button onClick={logout} className="border rounded-sm p-2">Logout</button>
-          <div className="border border-blue-400 border-2">
+          <div className="border-blue-400 border-2">
             {res}
           </div>
         </div>
