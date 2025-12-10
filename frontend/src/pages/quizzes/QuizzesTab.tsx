@@ -1,3 +1,4 @@
+import { useQuizzes } from "@/api/quizzes";
 import {
   Card,
   CardContent,
@@ -8,6 +9,9 @@ import {
 } from "@/components/ui/card"
 
 export default function QuizzesTab() {
+
+  const { data: quizzes, isLoading } = useQuizzes();
+
   return (
     <Card>
       <CardHeader>
@@ -18,6 +22,7 @@ export default function QuizzesTab() {
       </CardHeader>
       <CardContent className="grid gap-6">
         Content
+        {quizzes.map(quiz => <div key={quiz.id}>{quiz.name}</div>)}
       </CardContent>
       <CardFooter>
 
