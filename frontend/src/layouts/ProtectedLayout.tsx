@@ -14,15 +14,20 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import { useNavigate } from 'react-router';
+import { useAuthStore } from "@/store/auth";
 
 // TODO replace with real auth check
 const isAuthenticated = () => {
-  // TODO temp
-  // return !!localStorage.getItem("token");
+  const { user, fetchMe, logout } = useAuthStore();
+  if (!user) {
+    return false
+  }
   return true;
 };
 
 export default function ProtectedLayout() {
+  const { user, fetchMe, logout } = useAuthStore();
+
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
@@ -37,8 +42,8 @@ export default function ProtectedLayout() {
 
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // TODO implement logout
+  const handleLogout = async () => {
+    await logout();
   }
 
   return (

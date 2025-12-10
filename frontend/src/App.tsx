@@ -11,8 +11,16 @@ import QuizCreate from './pages/quiz/QuizCreate';
 import QuizLayout from './pages/quiz/QuizLayout';
 import QuizView from './pages/quiz/QuizView';
 import QuizEdit from './pages/quiz/QuizEdit';
+import { useAuthStore } from './store/auth';
+import { useEffect } from 'react';
 
 export default function App() {
+  const { user, fetchMe, logout } = useAuthStore();
+
+  useEffect(() => {
+    fetchMe(); // get logged in user if present on app load
+  }, [fetchMe]);
+
   return (
     <Routes>
       {/* Public routes */}
