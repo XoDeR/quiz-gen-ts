@@ -47,9 +47,20 @@ export async function persistRefreshToken({
   `;
 }
 
+export function setAccessCookie(res: any, accessToken: string): void {
+  const isProd = process.env.NODE_ENV === "production";
+  res.cookie("quiz_gen_access_token", accessToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "strict",
+    path: "/api",
+    maxAge: 15 * 60 * 1000 // 15 minutes in ms,
+  });
+}
+
 export function setRefreshCookie(res: any, refreshToken: string): void {
   const isProd = process.env.NODE_ENV === "production";
-  res.cookie("refresh_token", refreshToken, {
+  res.cookie("quiz_gen_refresh_token", refreshToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: "strict",

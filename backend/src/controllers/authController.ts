@@ -1,14 +1,16 @@
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
 import { sql } from "../services/db";
-import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import {
   createJti,
   signAccessToken,
   signRefreshToken,
   persistRefreshToken,
-  setRefreshCookie
+  setRefreshCookie,
+  hashToken,
+  rotateRefreshToken,
+  setAccessCookie
 } from "../utils/tokens";
 
 // Routes:
@@ -74,9 +76,47 @@ export const login = async (req: Request, res: Response) => {
     });
 
     setRefreshCookie(res, refreshToken);
+    setAccessCookie(res, accessToken);
 
-    res.json({ accessToken });
+    res.json({ message: "Login successful" });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
+  }
+}
+
+export const me = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "No user attached to request" });
+    }
+    const [user] = await sql`
+      SELECT id, username, email
+      FROM users
+      WHERE id = ${userId}
+      LIMIT 1;
+    `;
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ id: user.id, username: user.username, email: user.email });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+export const refresh = async (req: Request, res: Response) => {
+  try {
+
+  } catch (error) {
+
+  }
+}
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+
+  } catch (error) {
+
   }
 }
