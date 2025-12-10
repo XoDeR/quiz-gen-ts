@@ -49,6 +49,8 @@ export async function persistRefreshToken({
 
 export function setAccessCookie(res: any, accessToken: string): void {
   const isProd = process.env.NODE_ENV === "production";
+  // Note in prod if client and server are on different urls
+  // sameSite: "strict" will not work -- sameSite: "none" with secure: true is needed in that case
   res.cookie("quiz_gen_access_token", accessToken, {
     httpOnly: true,
     secure: isProd,

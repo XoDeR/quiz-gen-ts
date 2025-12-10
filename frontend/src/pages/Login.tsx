@@ -42,7 +42,7 @@ export default function Login() {
       const response = await axios.post("http://localhost:5002/api/auth/login", {
         email: "demo@example.com",
         password: "secret123",
-      });
+      }, { withCredentials: true }); // withCredentials: true is needed because after login cookies are set by the server
       setRes(response.data.message);
     } catch (err: any) {
       setRes(err.response?.data?.message || "Login failed");
