@@ -3,6 +3,13 @@ import { Request, Response } from "express";
 import { sql } from "../services/db";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
+import {
+  createJti,
+  signAccessToken,
+  signRefreshToken,
+  persistRefreshToken,
+  setRefreshCookie
+} from "../utils/tokens";
 
 // Routes:
 // /register
@@ -51,10 +58,24 @@ export const login = async (req: Request, res: Response) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
+    const accessToken = signAccessToken({ id: user.id, email: user.email });
+
+    const jti = createJti();
+    const refreshToken = signRefreshToken({ id: user.id }, jti);
+
     const payload = { id: user.id, email: user.email };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '15m' });
-    res.json({ token });
+    await persistRefreshToken({
+      user: { id: user.id },
+      refreshToken,
+      jti,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'] || ''
+    });
+
+    setRefreshCookie(res, refreshToken);
+
+    res.json({ accessToken });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
