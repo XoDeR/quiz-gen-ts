@@ -16,19 +16,10 @@ import {
 import { useNavigate } from 'react-router';
 import { useAuthStore } from "@/store/auth";
 
-// TODO replace with real auth check
-const isAuthenticated = () => {
-  const { user, fetchMe, logout } = useAuthStore();
-  if (!user) {
-    return false
-  }
-  return true;
-};
-
 export default function ProtectedLayout() {
-  const { user, fetchMe, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
 
-  if (!isAuthenticated()) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
