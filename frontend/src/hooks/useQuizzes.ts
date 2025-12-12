@@ -1,13 +1,43 @@
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import api from "../api/api";
 
+interface Quiz {
+  id: string;
+  title: string;
+  isPublished: boolean;
+};
+
+// Get all quizzes created by all users (with isPublished === true)
 export function useQuizzes() {
   return useQuery({
     queryKey: ['quizzes'],
     queryFn: async () => {
-      const res = await axios.get('http://localhost:5002/api/quizzes', { withCredentials: true });
+      const res = await api.get('/quizzes', { withCredentials: true });
       if (res.status !== 200) throw new Error('Failed to fetch quizzes');
       return res.data;
-    }
+    },
   });
 }
+
+// Get quizzes created by the current user
+export function useUserQuizzes() {
+  return useQuery({
+    queryKey: ['quizzes'],
+    queryFn: async () => {
+      const res = await api.get('/quizzes/me', { withCredentials: true });
+      if (res.status !== 200) throw new Error('Failed to fetch quizzes');
+      return res.data;
+    },
+  });
+}
+
+export const useCreateQuiz = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (newQuiz: Partial<Quiz>) =>
+      api.post("/quizzes", newQuiz, { withCredentials: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+  });
+};

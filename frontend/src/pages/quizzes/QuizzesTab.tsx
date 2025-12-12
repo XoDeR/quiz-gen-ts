@@ -1,4 +1,3 @@
-import { useQuizzes } from "@/api/quizzes";
 import {
   Card,
   CardContent,
@@ -7,10 +6,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { useQuizzes } from "@/hooks/useQuizzes";
 
 export default function QuizzesTab() {
 
   const { data: quizzes, isLoading } = useQuizzes();
+
+  console.log("quizzes: ", quizzes);
 
   return (
     <Card>
