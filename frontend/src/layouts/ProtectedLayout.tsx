@@ -17,7 +17,14 @@ import { useNavigate } from 'react-router';
 import { useAuthStore } from "@/store/auth";
 
 export default function ProtectedLayout() {
-  const { user, logout } = useAuthStore();
+  const { user, loading, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  console.log("ProtectedLayout state:", { user, loading });
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -31,7 +38,7 @@ export default function ProtectedLayout() {
   // separator
   // logout
 
-  const navigate = useNavigate();
+  
 
   const handleLogout = async () => {
     await logout();
