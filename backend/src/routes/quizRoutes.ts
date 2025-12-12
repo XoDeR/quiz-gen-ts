@@ -2,10 +2,11 @@ import { Router } from "express";
 import { protect } from "../middleware/authMiddleware";
 
 import {
+  getQuizzes,
+  createQuiz,
   /*
-  getPosts,
   getPostById,
-  createPost,
+  
   updatePost,
   deletePost,
   */
@@ -13,9 +14,9 @@ import {
 
 const router = Router();
 
-/*
-router.route("/").get(protect, getPosts).post(protect, createPost);
+router.route("/").get(protect, getQuizzes).post(protect, createQuiz);
 
+/*
 router
   .route("/:id")
   .get(protect, getPostById)

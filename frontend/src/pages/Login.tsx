@@ -1,8 +1,10 @@
 import { useAuthStore } from "@/store/auth";
 import axios from "axios";
+import { useNavigate } from "react-router";
 
 export default function Login() {
   const { user, fetchMe, logout } = useAuthStore();
+  const navigate = useNavigate();
 
   const login = async () => {
     // route: http://localhost:5002/api/auth/login
@@ -12,13 +14,15 @@ export default function Login() {
         password: "secret123",
       }, { withCredentials: true }); // withCredentials: true is needed because after login cookies are set by the server
       console.log(response.data.message);
+
+      // me should be always called after login
+      await fetchMe();
+
+      const path = `/`;
+      navigate(path);
     } catch (err: any) {
       console.log(err.response?.data?.message || "Login failed");
     }
-
-    // me should be always called after login
-    await fetchMe();
-
   }
 
   return (

@@ -10,6 +10,7 @@ import {
 import QuizzesTab from "./quizzes/QuizzesTab";
 import SubmittedTab from "./quizzes/SubmittedTab";
 import InProgressTab from "./quizzes/InProgressTab";
+import axios from "axios";
 
 export default function Quizzes() {
   // tanstack query example usage
@@ -25,6 +26,12 @@ export default function Quizzes() {
   // quizzes Quizzes
   // inProgress In Progress
   // submitted Submitted
+
+  const createTestQuizzes = async () => {
+    await axios.post('http://localhost:5002/api/quizzes', { title: "Quiz 1", isPublished: true}, { withCredentials: true });
+    await axios.post('http://localhost:5002/api/quizzes', { title: "Quiz 2", isPublished: true}, { withCredentials: true });
+    await axios.post('http://localhost:5002/api/quizzes', { title: "Quiz 3", isPublished: true}, { withCredentials: true });
+  }
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -46,6 +53,7 @@ export default function Quizzes() {
       </Tabs>
       <>
         <h1>Quizzes</h1>
+        <button onClick={createTestQuizzes} className="border rounded-sm p-2">Create test quizzes</button>
         <div className="flex min-h-svh flex-col items-center justify-center">
           <Button>Click me</Button>
         </div>
