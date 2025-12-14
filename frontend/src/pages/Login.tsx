@@ -1,4 +1,5 @@
 import {api} from "@/api/api";
+import LoginForm from "@/components/forms/LoginForm";
 import { useAuthStore } from "@/store/auth";
 import { useNavigate } from "react-router";
 
@@ -29,6 +30,7 @@ export default function Login() {
     <div>
       <h1>Login</h1>
       <button onClick={login} className="border rounded-sm p-2">Test Login</button>
+      <LoginForm/>
     </div>
   );
 }
