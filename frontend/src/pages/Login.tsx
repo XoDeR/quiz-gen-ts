@@ -1,5 +1,5 @@
+import api from "@/api/api";
 import { useAuthStore } from "@/store/auth";
-import axios from "axios";
 import { useNavigate } from "react-router";
 
 export default function Login() {
@@ -9,7 +9,7 @@ export default function Login() {
   const login = async () => {
     // route: http://localhost:5002/api/auth/login
     try {
-      const response = await axios.post("http://localhost:5002/api/auth/login", {
+      const response = await api.post("/auth/login", {
         email: "demo@example.com",
         password: "secret123",
       }, { withCredentials: true }); // withCredentials: true is needed because after login cookies are set by the server
@@ -28,7 +28,7 @@ export default function Login() {
   return (
     <div>
       <h1>Login</h1>
-      <button onClick={login} className="border rounded-sm p-2">Login</button>
+      <button onClick={login} className="border rounded-sm p-2">Test Login</button>
     </div>
   );
 }
