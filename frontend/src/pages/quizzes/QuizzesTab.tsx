@@ -24,7 +24,7 @@ export default function QuizzesTab() {
       </CardHeader>
       <CardContent className="grid gap-6">
         Content
-        {isLoading ? (<p>Loading...</p>) : (quizzes.map(quiz => <div key={quiz.id}>{quiz.name}</div>))}
+        {isLoading ? (<p>Loading...</p>) : (quizzes.map(quiz => <div key={quiz.id}>{quiz.title}</div>))}
       </CardContent>
       <CardFooter>
 
