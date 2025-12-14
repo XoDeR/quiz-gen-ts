@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
+import { api } from "@/api/api";
 
 interface User {
   id: string;
@@ -24,21 +25,24 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchMe: async () => {
     set({ loading: true });
     try {
-      const res = await axios.get("http://localhost:5002/api/auth/me", {
-        withCredentials: true, // include cookies
-      });
+      console.log("[Store] calling /auth/me");
+      const res = await api.protected.get("/auth/me");
+      console.log("[Store] /auth/me response:", res.status);
       if (res.status === 200) {
         set({ user: res.data, loading: false });
       } else {
         set({ user: null, loading: false });
       }
-    } catch {
+      //debugger;
+    } catch(err) {
+      console.log("[Store] /auth/me failed:", err);
       set({ user: null, loading: false });
+      //debugger;
     }
   },
 
   logout: async () => {
-    await axios.post("http://localhost:5002/api/auth/logout", {}, {
+    await api.protected.post("/auth/logout", {}, {
       withCredentials: true,
     });
     set({ user: null });

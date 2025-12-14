@@ -1,4 +1,4 @@
-import api from "@/api/api";
+import {api} from "@/api/api";
 import { useAuthStore } from "@/store/auth";
 import { useNavigate } from "react-router";
 
@@ -9,7 +9,7 @@ export default function Login() {
   const login = async () => {
     // route: http://localhost:5002/api/auth/login
     try {
-      const response = await api.post("/auth/login", {
+      const response = await api.public.post("/auth/login", {
         email: "demo@example.com",
         password: "secret123",
       }, { withCredentials: true }); // withCredentials: true is needed because after login cookies are set by the server

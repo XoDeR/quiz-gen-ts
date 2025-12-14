@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import api from "../api/api";
+import {api} from "../api/api";
 
 interface Quiz {
   id: string;
@@ -12,7 +12,7 @@ export function useQuizzes() {
   return useQuery({
     queryKey: ['quizzes'],
     queryFn: async () => {
-      const res = await api.get('/quizzes', { withCredentials: true });
+      const res = await api.protected.get('/quizzes', { withCredentials: true });
       if (res.status !== 200) throw new Error('Failed to fetch quizzes');
       return res.data;
     },
@@ -24,7 +24,7 @@ export function useUserQuizzes() {
   return useQuery({
     queryKey: ['quizzes'],
     queryFn: async () => {
-      const res = await api.get('/quizzes/me', { withCredentials: true });
+      const res = await api.protected.get('/quizzes/me', { withCredentials: true });
       if (res.status !== 200) throw new Error('Failed to fetch quizzes');
       return res.data;
     },
@@ -35,7 +35,7 @@ export const useCreateQuiz = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (newQuiz: Partial<Quiz>) =>
-      api.post("/quizzes", newQuiz, { withCredentials: true }),
+      api.protected.post("/quizzes", newQuiz, { withCredentials: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
     },

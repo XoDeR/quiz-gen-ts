@@ -12,14 +12,24 @@ import QuizLayout from './pages/quiz/QuizLayout';
 import QuizView from './pages/quiz/QuizView';
 import QuizEdit from './pages/quiz/QuizEdit';
 import { useAuthStore } from './store/auth';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function App() {
-  const { user, fetchMe, logout } = useAuthStore();
+  const fetchMe = useAuthStore((s) => s.fetchMe);
+  const hasFetched = useRef(false); // guard flag to call fetchMe only once
+
+   useEffect(() => {
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      console.log("[App] calling fetchMe first time");
+      fetchMe(); // get logged in user if present on app load
+    }
+  }, []);
 
   useEffect(() => {
-    fetchMe(); // get logged in user if present on app load
-  }, [fetchMe]);
+    console.log("[App] mount");
+    return () => console.log("[App] unmount");
+  }, []);
 
   return (
     <Routes>
