@@ -31,7 +31,6 @@ export default function Login() {
     <div>
       <button onClick={login} className="border rounded-sm p-2">Test Login</button>
       <LoginForm/>
-      <QuizForm/>
     </div>
   );
 }
