@@ -7,15 +7,37 @@ interface Quiz {
   isPublished: boolean;
 };
 
-// Get all quizzes created by all users (with isPublished === true)
-export function useQuizzes() {
+// Get all quizzes created by all users
+export function useQuizzes(published?: boolean, byOthers?: boolean) {
   return useQuery({
-    queryKey: ['quizzes'],
+    queryKey: ['quizzes', { published, byOthers }],
     queryFn: async () => {
-      const res = await api.protected.get('/quizzes');
+      const res = await api.protected.get('/quizzes', {
+        params: {
+          published,
+          byOthers,
+        }
+      });
       if (res.status !== 200) throw new Error('Failed to fetch quizzes');
       return res.data;
     },
+  });
+}
+
+export function useQuizzesTest(published?: boolean, byOthers?: boolean) {
+  return useQuery({
+    queryKey: ['quizzes', { published, byOthers }],
+    queryFn: async () => {
+      const res = await api.protected.get('/quizzes', {
+        params: {
+          published,
+          byOthers,
+        }
+      });
+      if (res.status !== 200) throw new Error('Failed to fetch quizzes');
+      return res.data;
+    },
+    enabled: false, // query deoes not run by default -- needed for testing
   });
 }
 

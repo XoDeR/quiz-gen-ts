@@ -3,6 +3,7 @@ import { protect } from "../middleware/authMiddleware";
 
 import {
   getQuizzes,
+  getUserQuizzes,
   createQuiz,
   /*
   getPostById,
@@ -15,6 +16,7 @@ import {
 const router = Router();
 
 router.route("/").get(protect, getQuizzes).post(protect, createQuiz);
+router.route("/me").get(protect, getUserQuizzes);
 
 /*
 router

@@ -6,12 +6,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { useQuizzes } from "@/hooks/useQuizzes";
+import { useQuizzes, useQuizzesTest } from "@/hooks/useQuizzes";
 
 import { useNavigate } from 'react-router';
 
 import { getQuizzesToSolveColumns, type QuizToSolve } from "./QuizzesColumns"
 import { DataTable } from "./QuizzesDataTable";
+import { Button } from "@/components/ui/button";
 
 function getData(): QuizToSolve[] {
   // Fetch data from your API here.
@@ -57,6 +58,19 @@ export default function QuizzesTab() {
   
   const columns = getQuizzesToSolveColumns(handleOpenQuiz);
 
+  // test
+  const { data: quizzesAll, refetch: refetchAll}  = useQuizzesTest();
+  const { data: quizzesWithParams, refetch: refetchWithParams}  = useQuizzesTest(true, true);
+
+  const getQuizzesPublishedByOthers = async () => {
+    refetchWithParams();
+  }
+
+  const getQuizzes = async () => {
+    refetchAll();
+  }
+  //-- test
+
   return (
     <Card>
       <CardHeader>
@@ -65,6 +79,15 @@ export default function QuizzesTab() {
           Try to solve these quizzes
         </CardDescription>
       </CardHeader>
+      {/* test */}
+      <Button variant="outline" onClick={getQuizzesPublishedByOthers} className="w-40">Test: Get published quizzes by others</Button>
+      <Button variant="outline" onClick={getQuizzes} className="w-40">Test: Get quizzes (all)</Button>
+      <p>All quizzes</p>
+      {quizzesAll && <pre>{JSON.stringify(quizzesAll, null, 2)}</pre>}
+      <p>Quizzes to solve</p>
+      {quizzesWithParams && <pre>{JSON.stringify(quizzesWithParams, null, 2)}</pre>}
+      {/* test */}
+
       <CardContent className="grid gap-6">
         {isLoading ? (
           <p>Loading...</p>

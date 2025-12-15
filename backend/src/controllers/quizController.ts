@@ -10,6 +10,45 @@ export const getQuizzes = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
+    const { published, byOthers } = req.query;
+
+    const publishedFilter =
+      published !== undefined ? sql`is_published = ${published === "true"}` : null;
+
+    const byOthersFilter =
+      byOthers === "true" ? sql`user_id != ${user.id}` : null;
+
+    const filters = [publishedFilter, byOthersFilter].filter(Boolean);
+
+    let quizzes;
+    if (filters.length > 0) {
+      quizzes = await sql`
+        SELECT id, title, is_published, updated_at
+        FROM quizzes
+        WHERE ${sql`${filters[0]}${filters[1] ? sql` AND ${filters[1]}` : sql``}`}
+      `;
+    } else {
+      quizzes = await sql`
+        SELECT id, title, is_published, updated_at
+        FROM quizzes
+      `;
+    }
+
+    res.json(quizzes);
+  } catch (error) {
+    console.error("Error fetching quizzes:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const getUserQuizzes = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+
+    if (!user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const quizzes = await sql`
       SELECT id, title, is_published
       FROM quizzes
