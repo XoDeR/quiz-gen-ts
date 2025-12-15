@@ -25,25 +25,25 @@ function getData(): SubmittedQuiz[] {
     {
       id: "1", // id of quiz
       title: "Quiz 1", // name of quiz
-      date: new Date().toString(), // updated_at of submission
+      date: new Date().toLocaleString(), // updated_at of submission
       result: "12/20", // result of submission
     },
     {
       id: "2",
       title: "Quiz 2",
-      date: new Date().toString(),
+      date: new Date().toLocaleString(),
       result: "12/20",
     },
     {
       id: "3",
       title: "Quiz 3",
-      date: new Date().toString(),
+      date: new Date().toLocaleString(),
       result: "12/20",
     },
     {
       id: "4",
       title: "Quiz 4",
-      date: new Date().toString(),
+      date: new Date().toLocaleString(),
       result: "12/20",
     },
   ];
@@ -52,7 +52,7 @@ function getData(): SubmittedQuiz[] {
 export default function SubmittedTab() {
   const navigate = useNavigate();
 
-  const data = getData()
+  const data = getData();
 
   const handleOpenQuiz = (quizId: string) => {
     console.log(`Opening quiz with ID: ${quizId}`);
@@ -77,9 +77,6 @@ export default function SubmittedTab() {
           <DataTable columns={columns} data={data} />
         </div>
       </CardContent>
-      <CardFooter>
-
-      </CardFooter>
     </Card>
   );
 }
