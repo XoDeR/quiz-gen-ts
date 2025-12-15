@@ -6,7 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 export type QuizToSolve = {
   id: string
   title: string
-  date: string
+  updated_at: string
 }
 
 type OpenQuizHandler = (quizId: string) => void;
@@ -20,8 +20,13 @@ export const getQuizzesToSolveColumns = (
       header: "Title",
     },
     {
-      accessorKey: "date",
-      header: "Created Date",
+      accessorKey: "updated_at",
+      header: "Date Created",
+      cell: ({ row }) => {
+        const date = new Date(row.getValue("updated_at"));
+        const formatted = date.toLocaleString();
+        return <div className="">{formatted}</div>
+      },
     },
     {
       id: "actions",

@@ -43,7 +43,8 @@ function getData(): QuizToSolve[] {
 export default function QuizzesTab() {
   const navigate = useNavigate();
 
-  const { data: quizzes, isLoading } = useQuizzes();
+  // get all quizzes that are: published (published === true) and created by other users (byOthers === true)
+  const { data: quizzes, isLoading } = useQuizzes(true, true);
   console.log("quizzes: ", quizzes);
 
   const mockData = getData();
@@ -80,12 +81,12 @@ export default function QuizzesTab() {
         </CardDescription>
       </CardHeader>
       {/* test */}
-      <Button variant="outline" onClick={getQuizzesPublishedByOthers} className="w-40">Test: Get published quizzes by others</Button>
+      {/* <Button variant="outline" onClick={getQuizzesPublishedByOthers} className="w-40">Test: Get published quizzes by others</Button>
       <Button variant="outline" onClick={getQuizzes} className="w-40">Test: Get quizzes (all)</Button>
       <p>All quizzes</p>
       {quizzesAll && <pre>{JSON.stringify(quizzesAll, null, 2)}</pre>}
       <p>Quizzes to solve</p>
-      {quizzesWithParams && <pre>{JSON.stringify(quizzesWithParams, null, 2)}</pre>}
+      {quizzesWithParams && <pre>{JSON.stringify(quizzesWithParams, null, 2)}</pre>} */}
       {/* test */}
 
       <CardContent className="grid gap-6">
@@ -94,7 +95,7 @@ export default function QuizzesTab() {
         ) : (
           // quizzes.map(quiz => <div key={quiz.id}>{quiz.title}</div>)
           <div className="container mx-auto py-10">
-            <DataTable columns={columns} data={mockData} />
+            <DataTable columns={columns} data={quizzes} />
           </div>
         )}
       </CardContent>
