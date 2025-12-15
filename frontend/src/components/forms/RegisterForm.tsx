@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { useLogin } from "../../hooks/useAuth";
+import { useRegister } from "../../hooks/useAuth";
 
 import { z } from "zod";
 import { useForm } from "@tanstack/react-form";
@@ -14,9 +14,11 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/auth";
 
 const formSchema = z.object({
+  username: z.string().min(3, {
+      message: "Username must be at least 3 characters long",
+  }),
   email: z.string().email({
     message: "Invalid email address",
   }),
@@ -25,13 +27,13 @@ const formSchema = z.object({
   }),
 });
 
-const LoginForm = () => {
-  const loginMutation = useLogin();
+const RegisterForm = () => {
+  const registerMutation = useRegister();
   const navigate = useNavigate();
-  const { fetchMe } = useAuthStore();
 
   const form = useForm({
     defaultValues: {
+      username: "",
       email: "",
       password: "",
     },
@@ -39,20 +41,17 @@ const LoginForm = () => {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      loginMutation.mutate(value, {
-        onSuccess: async () => {
-          await fetchMe();
-          navigate("/");
-        },
+      registerMutation.mutate(value, {
+        onSuccess: () => navigate("/login"),
       });
     },
   });
 
-  const isLoading = loginMutation.isPending;
+  const isLoading = registerMutation.isPending;
 
   return (
     <div className="mx-auto max-w-4xl p-4">
-      <h1 className="text-4xl font-medium p-6">Login</h1>
+      <h1 className="text-4xl font-medium p-6">Register</h1>
       
       <form
         onSubmit={(e) => {
@@ -68,11 +67,39 @@ const LoginForm = () => {
             size="sm"
             className="text-base border-none underline"
           >
-            <Link to="/register">Register</Link>
+            <Link to="/login">Login</Link>
           </Button>
         </div>
 
         <FieldGroup>
+          {/* username */}
+          <form.Field
+            name="username"
+            children={(field) => {
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+
+              return (
+                <Field data-invalid={isInvalid}> 
+                  <FieldLabel htmlFor={field.name}>Username</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="Username..."
+                    
+                  />
+                  <FieldDescription>
+                    Enter your username
+                  </FieldDescription>
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          />
+          {/* email */}
           <form.Field
             name="email"
             children={(field) => {
@@ -88,7 +115,7 @@ const LoginForm = () => {
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     aria-invalid={isInvalid}
-                    placeholder="example@email.com"
+                    placeholder="Email..."
                     autoComplete="email"
                   />
                   <FieldDescription>
@@ -99,6 +126,7 @@ const LoginForm = () => {
               );
             }}
           />
+          {/* password */}
           <form.Field
             name="password"
             children={(field) => {
@@ -134,12 +162,12 @@ const LoginForm = () => {
           size="lg"
           disabled={isLoading}
         >
-          {isLoading ? "Saving..." : "Login"}
+          {isLoading ? "Saving..." : "Register"}
         </Button>
-        {loginMutation.isError && <p>Error: {loginMutation.error.message}</p>}
+        {registerMutation.isError && <p>Error: {registerMutation.error.message}</p>}
       </form>
     </div>
   );
 };
 
-export default LoginForm;
+export default RegisterForm;

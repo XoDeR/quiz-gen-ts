@@ -29,7 +29,6 @@ export default function Login() {
 
   return (
     <div>
-      <h1>Login</h1>
       <button onClick={login} className="border rounded-sm p-2">Test Login</button>
       <LoginForm/>
       <QuizForm/>
