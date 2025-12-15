@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 
 import {
   Tabs,
@@ -10,19 +9,9 @@ import {
 import QuizzesTab from "./quizzes/QuizzesTab";
 import SubmittedTab from "./quizzes/SubmittedTab";
 import InProgressTab from "./quizzes/InProgressTab";
-import axios from "axios";
 import { api } from "@/api/api";
 
 export default function Quizzes() {
-  // tanstack query example usage
-  const { data, isLoading } = useQuery({
-    queryKey: ["quizzes"],
-    queryFn: async () => {
-      const res = await fetch("/api/quizzes");
-      return res.json();
-    },
-  });
-
   // tabs:
   // quizzes Quizzes
   // inProgress In Progress
@@ -62,11 +51,7 @@ export default function Quizzes() {
         <h1>Quizzes</h1>
         <Button variant="outline" onClick={createTestQuizzes} className="w-40">Create test quizzes</Button>
         <Button variant="outline" onClick={createTestQuizzes2} className="w-40">Create test quizzes 2</Button>
-        {/* tanstack query example usage */}
-        {/* {isLoading ? <p>Loading...</p> : <ul>{data.map((q: { id: string; title: string; }) => <li key={q.id}>{q.title}</li>)}</ul>}; */}
       </>
-
     </div >
-
   );
 }

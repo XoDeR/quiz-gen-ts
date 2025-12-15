@@ -50,7 +50,7 @@ export default function QuizzesTab() {
   const handleOpenQuiz = (quizId: string) => {
     console.log(`Opening quiz with ID: ${quizId}`);
 
-    const status = "submitted";
+    const status = "to-do";
     const path = `/quizzes/${quizId}/view?status=${status}`;
     navigate(path);
   }
