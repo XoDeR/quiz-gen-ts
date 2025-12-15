@@ -37,7 +37,7 @@ export function useQuizzesTest(published?: boolean, byOthers?: boolean) {
       if (res.status !== 200) throw new Error('Failed to fetch quizzes');
       return res.data;
     },
-    enabled: false, // query deoes not run by default -- needed for testing
+    enabled: false, // query does not run by default -- needed for testing
   });
 }
 

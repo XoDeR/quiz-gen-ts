@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { sql } from "../services/db";
 import { v4 as uuidv4 } from "uuid";
+import { QuizMutateAnswerOptions, QuizMutateCorrectAnswers, QuizMutateQuestions } from "../interfaces";
 
 export const getQuizzes = async (req: Request, res: Response) => {
   try {
@@ -90,9 +91,21 @@ export const createQuiz = async (req: Request, res: Response) => {
 
     const { title, isPublished } = req.body;
     const id = uuidv4();
-    const quiz = await sql`
+    const [quiz] = await sql`
       INSERT INTO quizzes (id, title, is_published, user_id) VALUES (${id}, ${title}, ${isPublished}, ${user.id})
     `;
+
+    const { questions, answerOptions, correctAnswers } = req.body;
+    if (questions) {
+      await mutateQuizQuestions(questions, quiz.id);
+    }
+    if (answerOptions) {
+      await mutateQuizAnswerOptions(answerOptions, quiz.id);
+    }
+    if (correctAnswers) {
+      await mutateQuizCorrectAnswers(correctAnswers, quiz.id);
+    }
+
     res.status(201).json(quiz);
   } catch (error: any) {
     console.error("Error fetching quizzes:");
@@ -111,6 +124,25 @@ export const createQuiz = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+const mutateQuizQuestions = async (questions: QuizMutateQuestions, quizId: string) => {
+  for (const {text, type: typeStr, display_order} of questions.create) {
+    const id = uuidv4();
+    const type: number = (typeStr === "single") ? 0 : 1;
+    const [question] = await sql`
+      INSERT INTO questions (id, text, type, display_order, user_id) VALUES (${id}, ${title}, ${isPublished}, ${user.id})
+    `;
+  }
+    
+};
+
+const mutateQuizAnswerOptions = async (answerOptions: QuizMutateAnswerOptions, quizId: string) => {
+
+}
+
+const mutateQuizCorrectAnswers = async (correctAnswers: QuizMutateCorrectAnswers, quizId: string) => {
+
+}
 
 /*
 export const createPost = async (req: Request, res: Response) => {

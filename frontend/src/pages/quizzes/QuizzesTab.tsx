@@ -72,6 +72,41 @@ export default function QuizzesTab() {
   }
   //-- test
 
+  interface QuizMutateQuestions {
+    create: { text: string, type: 'single' | 'multiple', display_order: number }[];
+    update: { id: string, text?: string, type?: 'single' | 'multiple', display_order?: number }[];
+    delete: string[];
+  };
+
+  interface QuizMutateAnswerOptions {
+
+  }
+
+  interface QuizMutateCorrectAnswers {
+    create: { question_id: string } [];
+    delete: string[]; // list of correctAnswer id's
+  }
+
+  // test
+  const questions: QuizMutateQuestions = {
+    create: [],
+    update: [],
+    delete: [],
+  };
+  const answerOptions: QuizMutateAnswerOptions = {
+    create: [],
+    update: [],
+    delete: [],
+  };
+  const correctAnswers: QuizMutateCorrectAnswers = {
+    create: [],
+    delete: [],
+  }
+  
+  //-- test
+
+
+
   return (
     <Card>
       <CardHeader>
@@ -80,6 +115,9 @@ export default function QuizzesTab() {
           Try to solve these quizzes
         </CardDescription>
       </CardHeader>
+      {/* test */}
+      <Button variant="outline" onClick={getQuizzesPublishedByOthers} className="w-40">Test: Create quiz with questions</Button>
+      {/* test */}
       {/* test */}
       {/* <Button variant="outline" onClick={getQuizzesPublishedByOthers} className="w-40">Test: Get published quizzes by others</Button>
       <Button variant="outline" onClick={getQuizzes} className="w-40">Test: Get quizzes (all)</Button>
