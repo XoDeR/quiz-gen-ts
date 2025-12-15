@@ -90,6 +90,11 @@ export const login = async (req: Request, res: Response) => {
       userAgent: req.headers['user-agent'] || ''
     });
 
+    // guarantee that prev cookies are replaced
+    res.clearCookie('quiz_gen_refresh_token', { path: '/api/auth/refresh' });
+    res.clearCookie('quiz_gen_access_token', { path: '/api' });
+    console.log("Cleaned cookies: quiz_gen_refresh_token, quiz_gen_access_token");
+
     setRefreshCookie(res, refreshToken);
     setAccessCookie(res, accessToken);
 

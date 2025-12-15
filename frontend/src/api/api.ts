@@ -5,7 +5,7 @@ const API_BASE_URL = "http://localhost:5002/api";
 
 export const apiPublic = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false, // no cookies
+  withCredentials: true, // cookies are still neaded for login and register
 });
 
 export const apiProtected = axios.create({

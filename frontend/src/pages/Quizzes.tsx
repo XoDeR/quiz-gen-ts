@@ -11,6 +11,7 @@ import QuizzesTab from "./quizzes/QuizzesTab";
 import SubmittedTab from "./quizzes/SubmittedTab";
 import InProgressTab from "./quizzes/InProgressTab";
 import axios from "axios";
+import { api } from "@/api/api";
 
 export default function Quizzes() {
   // tanstack query example usage
@@ -28,9 +29,15 @@ export default function Quizzes() {
   // submitted Submitted
 
   const createTestQuizzes = async () => {
-    await axios.post('http://localhost:5002/api/quizzes', { title: "Quiz 1", isPublished: true}, { withCredentials: true });
-    await axios.post('http://localhost:5002/api/quizzes', { title: "Quiz 2", isPublished: true}, { withCredentials: true });
-    await axios.post('http://localhost:5002/api/quizzes', { title: "Quiz 3", isPublished: true}, { withCredentials: true });
+    await api.protected.post('/quizzes', { title: "Quiz 1", isPublished: true});
+    await api.protected.post('/quizzes', { title: "Quiz 2", isPublished: true});
+    await api.protected.post('/quizzes', { title: "Quiz 3", isPublished: true});
+  }
+
+  const createTestQuizzes2 = async () => {
+    await api.protected.post('/quizzes', { title: "Quiz By Bob 1", isPublished: true});
+    await api.protected.post('/quizzes', { title: "Quiz By Bob 2", isPublished: true});
+    await api.protected.post('/quizzes', { title: "Quiz By Bob 3", isPublished: true});
   }
 
   return (
@@ -53,10 +60,8 @@ export default function Quizzes() {
       </Tabs>
       <>
         <h1>Quizzes</h1>
-        <button onClick={createTestQuizzes} className="border rounded-sm p-2">Create test quizzes</button>
-        <div className="flex min-h-svh flex-col items-center justify-center">
-          <Button>Click me</Button>
-        </div>
+        <Button variant="outline" onClick={createTestQuizzes} className="w-40">Create test quizzes</Button>
+        <Button variant="outline" onClick={createTestQuizzes2} className="w-40">Create test quizzes 2</Button>
         {/* tanstack query example usage */}
         {/* {isLoading ? <p>Loading...</p> : <ul>{data.map((q: { id: string; title: string; }) => <li key={q.id}>{q.title}</li>)}</ul>}; */}
       </>
