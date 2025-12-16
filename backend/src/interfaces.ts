@@ -11,6 +11,6 @@ export interface QuizMutateAnswerOptions {
 }
 
 export interface QuizMutateCorrectAnswers {
-  create: { id: string, question_id: string, answer_option_id: string }[];
+  create: { question_id: string, answer_option_id: string }[];
   delete: string[];
 }

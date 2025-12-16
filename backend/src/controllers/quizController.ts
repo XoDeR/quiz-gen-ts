@@ -101,22 +101,27 @@ export const createQuiz = async (req: Request, res: Response) => {
 
     const { title, isPublished } = req.body;
     const id = uuidv4();
+
+    await sql`BEGIN`;
     const [quiz] = await sql`
       INSERT INTO quizzes (id, title, is_published, user_id) VALUES (${id}, ${title}, ${isPublished}, ${user.id})
     `;
 
     const { questions, answerOptions, correctAnswers } = req.body;
-    if (!questions || !answerOptions || !correctAnswers) {
-      return res.status(400).json({ error: "Incorrect data in request" });
+    if (questions) {
+      // if questions is present the rest should also be present
+      if (!questions || !answerOptions || !correctAnswers) {
+        await sql`ROLLBACK`;
+        return res.status(400).json({ error: "Incorrect data in request" });
+      }
+      const errorMessage = await mutateQuizQuestions(questions, answerOptions, correctAnswers, quiz.id);
+      if (errorMessage) {
+        await sql`ROLLBACK`;
+        return res.status(400).json({ error: errorMessage });
+      }
     }
-    await mutateQuizQuestions(questions, answerOptions, correctAnswers, quiz.id);
 
-    if (answerOptions) {
-      await mutateQuizAnswerOptions(answerOptions, quiz.id);
-    }
-    if (correctAnswers) {
-      await mutateQuizCorrectAnswers(correctAnswers, quiz.id);
-    }
+    await sql`COMMIT`;
 
     res.status(201).json(quiz);
   } catch (error: any) {
@@ -140,7 +145,7 @@ export const createQuiz = async (req: Request, res: Response) => {
 const mutateQuizQuestions = async (questions: QuizMutateQuestions, 
     answerOptions: QuizMutateAnswerOptions, 
     correctAnswers: QuizMutateCorrectAnswers, 
-    quizId: string) => {
+    quizId: string): Promise<string | undefined> => {
   // 1. delete ops
   for (const id of correctAnswers.delete) {
     await sql`
@@ -161,27 +166,121 @@ const mutateQuizQuestions = async (questions: QuizMutateQuestions,
     `;
   }
   // 2. update ops
-
-  // 3. create ops
-  
-  
-  for (const {text, type: typeStr, display_order} of questions.create) {
-    const id = uuidv4();
-    const type: number = (typeStr === "single") ? 0 : 1;
-    const [question] = await sql`
-      INSERT INTO questions (id, text, type, display_order, user_id) VALUES (${id}, ${title}, ${isPublished}, ${user.id})
+  for (const {id, text, type, display_order} of questions.update) {
+    await sql`
+      UPDATE questions
+      SET
+        text = COALESCE(${text}, text),
+        type = COALESCE(${type}, type),
+        display_order = COALESCE(${display_order}, display_order),
+      WHERE id = ${id}
     `;
   }
+
+  for (const {id, text, display_order} of answerOptions.update) {
+    await sql`
+      UPDATE answer_options
+      SET
+        text = COALESCE(${text}, text),
+        display_order = COALESCE(${display_order}, display_order),
+      WHERE id = ${id}
+    `;
+  }
+  // 3. create ops
+  // tempId is uuid assigned on client
+  // it should be replaced with id (uuid) assigned by backend
+  const questionsTempIdToIdMap = new Map<string, string>();
+  
+  for (const {id: tempId, text, type: typeStr, display_order} of questions.create) {
+    const id = uuidv4();
+    questionsTempIdToIdMap.set(tempId, id);
+    const type: number = (typeStr === "single") ? 0 : 1;
+    const [question] = await sql`
+      INSERT INTO questions (id, text, type, display_order, quiz_id) VALUES (${id}, ${text}, ${type}, ${display_order}, ${quizId})
+    `;
+  }
+
+  const answerOptionsTempIdToIdMap = new Map<string, string>();
+  for (const {id: tempId, question_id: tempQuestionId, text, display_order} of answerOptions.create) {
+    const id = uuidv4();
+    answerOptionsTempIdToIdMap.set(tempId, id);
+    // answerOption could be created on
+    // - already existing question
+    // - new question just created, then it uses tempId that's looked up from the map
+    let questionId: string | undefined = undefined;
+    const [questionExists] = await sql`
+      SELECT EXISTS(
+        SELECT 1 FROM questions WHERE id = ${tempQuestionId}
+      ) AS found;
+    `;
+
+    if (questionExists.found) {
+      // question exists
+      questionId = tempQuestionId;
+    } else {
+      // try to find real question_id from the map
+      questionId = questionsTempIdToIdMap.get(tempQuestionId);
+    }
     
+    if (!questionId) {
+      // return error, don't process further
+      return "Incorrect answerOption data";
+    }
+
+    const [answerOption] = await sql`
+      INSERT INTO answer_options (id, text, display_order, question_id) VALUES (${id}, ${text}, ${display_order}, ${questionId})
+    `;
+  }
+
+  for (const {question_id: tempQuestionId, answer_option_id: tempAnswerOptionId} of correctAnswers.create) {
+    const id = uuidv4();
+    let questionId: string | undefined = undefined;
+    const [questionExists] = await sql`
+      SELECT EXISTS(
+        SELECT 1 FROM questions WHERE id = ${tempQuestionId}
+      ) AS found;
+    `;
+
+    if (questionExists.found) {
+      // question exists
+      questionId = tempQuestionId;
+    } else {
+      // try to find real question_id from the map
+      questionId = questionsTempIdToIdMap.get(tempQuestionId);
+    }
+    
+    if (!questionId) {
+      // return error, don't process further
+      return "Incorrect correctAnswer data";
+    }
+    let answerOptionId: string | undefined = undefined;
+    const [answerOptionExists] = await sql`
+      SELECT EXISTS(
+        SELECT 1 FROM answer_options WHERE id = ${tempAnswerOptionId}
+      ) AS found;
+    `;
+
+    if (answerOptionExists.found) {
+      // answerOption exists
+      answerOptionId = tempAnswerOptionId;
+    } else {
+      // try to find real answer_option_id from the map
+      answerOptionId = answerOptionsTempIdToIdMap.get(tempAnswerOptionId);
+    }
+    
+    if (!answerOptionId) {
+      // return error, don't process further
+      return "Incorrect correctAnswer data";
+    }
+
+    const [correctAnswer] = await sql`
+      INSERT INTO correct_answers (id, question_id, answer_option_id) VALUES (${id}, ${questionId}, ${answerOptionId}, ${questionId})
+    `;
+  }
+
+  // no errors
+  return undefined;
 };
-
-const mutateQuizAnswerOptions = async (answerOptions: QuizMutateAnswerOptions, quizId: string) => {
-
-}
-
-const mutateQuizCorrectAnswers = async (correctAnswers: QuizMutateCorrectAnswers, quizId: string) => {
-
-}
 
 export const updateQuiz = async (req: Request, res: Response) => {
   try {
@@ -195,6 +294,7 @@ export const updateQuiz = async (req: Request, res: Response) => {
 
     const { title, is_published } = req.body;
 
+    await sql`BEGIN`;
     const [quiz] = await sql`
       UPDATE quizzes
       SET
@@ -205,8 +305,21 @@ export const updateQuiz = async (req: Request, res: Response) => {
       RETURNING *;
     `;
 
+    const { questions, answerOptions, correctAnswers } = req.body;
+    if (questions) {
+      // if questions is present the rest should also be present
+      if (!questions || !answerOptions || !correctAnswers) {
+        await sql`ROLLBACK`;
+        return res.status(400).json({ error: "Incorrect data in request" });
+      }
+      const errorMessage = await mutateQuizQuestions(questions, answerOptions, correctAnswers, quiz.id);
+      if (errorMessage) {
+        await sql`ROLLBACK`;
+        return res.status(400).json({ error: errorMessage });
+      }
+    }
     
-    
+    await sql`COMMIT`;
     res.json(quiz);
   } catch (error) {
     res.status(500).json({ error: "Server error" });

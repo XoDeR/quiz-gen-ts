@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router';
 import { getQuizzesToSolveColumns, type QuizToSolve } from "./QuizzesColumns"
 import { DataTable } from "./QuizzesDataTable";
 import { Button } from "@/components/ui/button";
+import type { QuizMutateAnswerOptions, QuizMutateCorrectAnswers, QuizMutateQuestions } from "@/interfaces";
 
 function getData(): QuizToSolve[] {
   // Fetch data from your API here.
@@ -71,21 +72,6 @@ export default function QuizzesTab() {
     refetchAll();
   }
   //-- test
-
-  interface QuizMutateQuestions {
-    create: { text: string, type: 'single' | 'multiple', display_order: number }[];
-    update: { id: string, text?: string, type?: 'single' | 'multiple', display_order?: number }[];
-    delete: string[];
-  };
-
-  interface QuizMutateAnswerOptions {
-
-  }
-
-  interface QuizMutateCorrectAnswers {
-    create: { question_id: string } [];
-    delete: string[]; // list of correctAnswer id's
-  }
 
   // test
   const questions: QuizMutateQuestions = {
