@@ -5,12 +5,9 @@ import {
   getQuizzes,
   getUserQuizzes,
   createQuiz,
-  /*
-  getPostById,
-  
-  updatePost,
-  deletePost,
-  */
+  getQuizById,
+  updateQuiz,
+  deleteQuiz,
 } from "../controllers/quizController";
 
 const router = Router();
@@ -18,12 +15,10 @@ const router = Router();
 router.route("/").get(protect, getQuizzes).post(protect, createQuiz);
 router.route("/me").get(protect, getUserQuizzes);
 
-/*
 router
   .route("/:id")
-  .get(protect, getPostById)
-  .put(protect, updatePost)
-  .delete(protect, deletePost);
-*/
+  .get(protect, getQuizById)
+  .put(protect, updateQuiz)
+  .delete(protect, deleteQuiz);
 
 export default router;

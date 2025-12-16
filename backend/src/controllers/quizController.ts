@@ -63,23 +63,33 @@ export const getUserQuizzes = async (req: Request, res: Response) => {
   }
 };
 
-/*
-
-export const getPostById = async (req: Request, res: Response) => {
+export const getQuizById = async (req: Request, res: Response) => {
   try {
-    const post = await prisma.post.findUnique({
-      where: { id: Number(req.params.id) },
-      include: { authors: true },
-    });
-    if (!post) {
-      return res.status(404).json({ error: "Post not found" });
+    const user = (req as any).user;
+
+    if (!user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    res.json(post);
+    
+    const id: string = req.params.id;
+
+    const [quiz] = await sql`
+      SELECT id, title, is_published, updated_at
+      FROM quizzes
+      WHERE id = ${id}
+      LIMIT 1;
+    `;
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    // TODO: attach related questions, answerOptions, correct answers
+  
+    res.json(quiz);
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
 };
-*/
 
 export const createQuiz = async (req: Request, res: Response) => {
   try {
@@ -96,9 +106,11 @@ export const createQuiz = async (req: Request, res: Response) => {
     `;
 
     const { questions, answerOptions, correctAnswers } = req.body;
-    if (questions) {
-      await mutateQuizQuestions(questions, quiz.id);
+    if (!questions || !answerOptions || !correctAnswers) {
+      return res.status(400).json({ error: "Incorrect data in request" });
     }
+    await mutateQuizQuestions(questions, answerOptions, correctAnswers, quiz.id);
+
     if (answerOptions) {
       await mutateQuizAnswerOptions(answerOptions, quiz.id);
     }
@@ -125,7 +137,34 @@ export const createQuiz = async (req: Request, res: Response) => {
   }
 };
 
-const mutateQuizQuestions = async (questions: QuizMutateQuestions, quizId: string) => {
+const mutateQuizQuestions = async (questions: QuizMutateQuestions, 
+    answerOptions: QuizMutateAnswerOptions, 
+    correctAnswers: QuizMutateCorrectAnswers, 
+    quizId: string) => {
+  // 1. delete ops
+  for (const id of correctAnswers.delete) {
+    await sql`
+      DELETE FROM correct_answers
+      WHERE id = ${id};
+    `;
+  }
+  for (const id of answerOptions.delete) {
+    await sql`
+      DELETE FROM answer_options
+      WHERE id = ${id};
+    `;
+  }
+  for (const id of questions.delete) {
+    await sql`
+      DELETE FROM questions
+      WHERE id = ${id};
+    `;
+  }
+  // 2. update ops
+
+  // 3. create ops
+  
+  
   for (const {text, type: typeStr, display_order} of questions.create) {
     const id = uuidv4();
     const type: number = (typeStr === "single") ? 0 : 1;
@@ -144,36 +183,16 @@ const mutateQuizCorrectAnswers = async (correctAnswers: QuizMutateCorrectAnswers
 
 }
 
-/*
-export const createPost = async (req: Request, res: Response) => {
+export const updateQuiz = async (req: Request, res: Response) => {
   try {
-    const { name, content } = req.body;
+    const user = (req as any).user;
 
-    const id = uuidv4();
-    await sql`
-      INSERT INTO quizzes (id, name) VALUES (${id}, ${name})
-    `;
+    if (!user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    const id: string = req.params.id;
 
-
-    const post = await prisma.post.create({
-      data: {
-        title,
-        content,
-        authors: {
-          connect: {
-            id: (req as any).user.id,
-          },
-        },
-      },
-    });
-    res.status(201).json(post);
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-export const updatePost = async (req: Request, res: Response) => {
-  try {
     const { title, content } = req.body;
 
     UPDATE quizzes
@@ -194,16 +213,15 @@ WHERE id = '...';
   }
 };
 
-export const deletePost = async (req: Request, res: Response) => {
+export const deleteQuiz = async (req: Request, res: Response) => {
   try {
-    await prisma.post.delete({
-      where: {
-        id: Number(req.params.id),
-      },
-    });
-    res.json({ message: "Post deleted" });
+    const id: string = req.params.id;
+    await sql`
+      DELETE FROM quizzes
+      WHERE id = ${id};
+    `;
+    res.json({ message: "Quiz deleted" });
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
 };
-*/
