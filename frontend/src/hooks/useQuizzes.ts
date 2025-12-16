@@ -1,11 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {api} from "../api/api";
-
-interface Quiz {
-  id: string;
-  title: string;
-  isPublished: boolean;
-};
+import type { QuizWithQuestions } from "@/interfaces";
 
 // Get all quizzes created by all users
 export function useQuizzes(published?: boolean, byOthers?: boolean) {
@@ -56,7 +51,7 @@ export function useUserQuizzes() {
 export const useCreateQuiz = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (newQuiz: Partial<Quiz>) =>
+    mutationFn: (newQuiz: QuizWithQuestions) =>
       api.protected.post("/quizzes", newQuiz),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });

@@ -47,3 +47,15 @@ export interface QuizMutateCorrectAnswers {
   create: { question_id: string, answer_option_id: string }[];
   delete: string[];
 }
+
+export interface Quiz {
+  id: string;
+  title: string;
+  isPublished: boolean;
+};
+
+export interface QuizWithQuestions extends Partial<Quiz> {
+  questions?: QuizMutateQuestions;
+  answerOptions?: QuizMutateAnswerOptions;
+  correctAnswers?: QuizMutateCorrectAnswers;
+}

@@ -104,7 +104,9 @@ export const createQuiz = async (req: Request, res: Response) => {
 
     await sql`BEGIN`;
     const [quiz] = await sql`
-      INSERT INTO quizzes (id, title, is_published, user_id) VALUES (${id}, ${title}, ${isPublished}, ${user.id})
+      INSERT INTO quizzes (id, title, is_published, user_id) 
+      VALUES (${id}, ${title}, ${isPublished}, ${user.id})
+      RETURNING *;
     `;
 
     const { questions, answerOptions, correctAnswers } = req.body;
@@ -125,6 +127,7 @@ export const createQuiz = async (req: Request, res: Response) => {
 
     res.status(201).json(quiz);
   } catch (error: any) {
+    await sql`ROLLBACK`;
     console.error("Error fetching quizzes:");
     console.error("Message:", error.message);
     console.error("Stack:", error.stack);
@@ -274,7 +277,7 @@ const mutateQuizQuestions = async (questions: QuizMutateQuestions,
     }
 
     const [correctAnswer] = await sql`
-      INSERT INTO correct_answers (id, question_id, answer_option_id) VALUES (${id}, ${questionId}, ${answerOptionId}, ${questionId})
+      INSERT INTO correct_answers (id, question_id, answer_option_id) VALUES (${id}, ${questionId}, ${answerOptionId})
     `;
   }
 
@@ -292,14 +295,14 @@ export const updateQuiz = async (req: Request, res: Response) => {
     
     const id: string = req.params.id;
 
-    const { title, is_published } = req.body;
+    const { title, isPublished } = req.body;
 
     await sql`BEGIN`;
     const [quiz] = await sql`
       UPDATE quizzes
       SET
         title = COALESCE(${title}, title),
-        is_published = COALESCE(${is_published}, is_published),
+        is_published = COALESCE(${isPublished}, is_published),
         updated_at = now()
       WHERE id = ${id}
       RETURNING *;
@@ -322,6 +325,7 @@ export const updateQuiz = async (req: Request, res: Response) => {
     await sql`COMMIT`;
     res.json(quiz);
   } catch (error) {
+    await sql`ROLLBACK`;
     res.status(500).json({ error: "Server error" });
   }
 };
