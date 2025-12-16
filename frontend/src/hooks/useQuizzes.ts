@@ -58,3 +58,21 @@ export const useCreateQuiz = () => {
     },
   });
 };
+
+export function useQuiz(quizId: string, withAnswers?: boolean) {
+  return useQuery({
+    queryKey: ['quizzes', quizId, {withAnswers}],
+    queryFn: async () => {
+      const url = `/quizzes/${quizId}`;
+      const res = await api.protected.get(url, {
+        params: {
+          withAnswers,
+        }
+      });
+      if (res.status !== 200) {
+        throw new Error(`Failed to fetch quiz ${quizId}. Status: ${res.status}`);
+      }
+      return res.data;
+    },
+  });
+};

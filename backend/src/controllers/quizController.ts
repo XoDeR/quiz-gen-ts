@@ -64,6 +64,49 @@ export const getUserQuizzes = async (req: Request, res: Response) => {
 };
 
 export const getQuizById = async (req: Request, res: Response) => {
+  
+  interface DBCorrectAnswer {
+    id: string;
+    answerOptionId: string;
+  }
+
+  interface DBAnswerOption {
+    id: string;
+    text: string;
+    displayOrder: number;
+    questionId?: string;
+  }
+
+  interface QuestionOutput {
+    id: string;
+    text: string;
+    type: "single" | "multiple";
+    answerOptions: {
+        id: string;
+        text: string;
+        displayOrder: number;
+    }[];
+    correctAnswers?: {
+        id: string;
+        answer_option_id: string;
+    }[];
+  }
+
+  interface QuizResponseOutput {
+    id: string;
+    title: string;
+    isPublished: boolean;
+    updatedAt: Date;
+    questions?: QuestionOutput[];
+  }
+
+  interface DBQuestion {
+    id: string;
+    text: string;
+    type: 0 | 1;
+    display_order: number;
+  }
+  
   try {
     const user = (req as any).user;
 
@@ -72,6 +115,8 @@ export const getQuizById = async (req: Request, res: Response) => {
     }
     
     const id: string = req.params.id;
+    const { withAnswers } = req.query;
+    const showCorrectAnswers = withAnswers === "true";
 
     const [quiz] = await sql`
       SELECT id, title, is_published, updated_at
@@ -83,9 +128,84 @@ export const getQuizById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Quiz not found' });
     }
 
-    // TODO: attach related questions, answerOptions, correct answers
+    const quizResponse: QuizResponseOutput = {
+      id: quiz.id,
+      title: quiz.title,
+      isPublished: quiz.is_published,
+      updatedAt: quiz.updated_at,
+    };
+
+    // questions
+    const questions: DBQuestion[] = await sql`
+      SELECT 
+        id, 
+        text, 
+        type,
+        display_order
+      FROM questions
+      WHERE quiz_id = ${id}
+      ORDER BY display_order;
+    ` as DBQuestion[];
+
+    if (questions.length > 0) {
+      const questionIds = questions.map(q => q.id);
+
+      const answerOptions: DBAnswerOption[] = await sql`
+          SELECT 
+              id, 
+              question_id AS "questionId", 
+              text, 
+              display_order AS "displayOrder"
+          FROM answer_options
+          WHERE question_id = ANY(${questionIds})
+          ORDER BY "displayOrder";
+      ` as DBAnswerOption[];
+
+      let correctAnswers: DBCorrectAnswer[] = [];
+      if (showCorrectAnswers) {
+          correctAnswers = await sql`
+              SELECT 
+                  id, 
+                  answer_option_id AS "answerOptionId"
+              FROM correct_answers
+              WHERE answer_option_id IN (SELECT id FROM answer_options WHERE question_id = ANY(${questionIds}));
+          ` as DBCorrectAnswer[];
+      }
+
+      const questionsWithDetails: QuestionOutput[] = questions.map(q => { 
+        const options = answerOptions
+            .filter(o => o.questionId === q.id)
+            .map(({ questionId, ...optionRest }) => optionRest);
+
+        const questionType = q.type === 0 ? "single" : "multiple";
+
+        const questionObject: QuestionOutput = {
+            id: q.id,
+            text: q.text,
+            type: questionType,
+            answerOptions: options,
+        };
+        
+        if (showCorrectAnswers) {
+            const questionCorrectAnswers = correctAnswers.filter(ca => 
+                options.some(opt => opt.id === ca.answerOptionId) 
+            );
+
+            if (questionCorrectAnswers.length > 0) {
+                questionObject.correctAnswers = questionCorrectAnswers.map(ca => ({
+                    id: ca.id,
+                    answer_option_id: ca.answerOptionId
+                }));
+            }
+        }
+
+        return questionObject;
+      });
+
+      quizResponse.questions = questionsWithDetails;
+    }
   
-    res.json(quiz);
+    res.status(200).json(quizResponse);
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }

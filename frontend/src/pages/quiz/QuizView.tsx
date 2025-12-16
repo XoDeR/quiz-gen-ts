@@ -31,7 +31,7 @@ export default function QuizView() {
       <h2>Viewing Quiz ID: {quizId}</h2>
       <p>Status: {quizStatusMessage}</p>
       {quizStatus === 'to-do' && (
-        <QuizForm/>
+        <QuizForm quizId={quizId!} />
       )}
     </div>
   );

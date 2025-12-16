@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { useQuiz } from '@/hooks/useQuizzes';
 
 
 interface AnswerOption {
@@ -35,7 +36,7 @@ const mockQuizData: Question[] = [
     text: "Which method is used to update state in a functional component?",
     type: "single",
     answerOptions: [
-      { id: "o-e5f6g7h8", text: "this.setState()" },
+      { id: "o-e5f6g7h8", text: "###this.setState()" },
       { id: "o-i9j0k1l2", text: "useState hook's setter function" },
       { id: "o-m3n4o5p6", text: "forceUpdate()" }
     ],
@@ -45,7 +46,7 @@ const mockQuizData: Question[] = [
     text: "Which of the following are benefits of using React?",
     type: "multiple",
     answerOptions: [
-      { id: "o-u1v2w3x4", text: "Virtual DOM for performance" },
+      { id: "o-u1v2w3x4", text: "###Virtual DOM for performance" },
       { id: "o-y5z6a7b8", text: "Server-side rendering only" },
       { id: "o-c9d0e1f2", text: "Reusable components" },
       { id: "o-g3h4i5j6", text: "Direct manipulation of the real DOM" }
@@ -138,7 +139,14 @@ const MultipleChoiceField: React.FC<MultipleChoiceFieldProps> = ({ question, fie
   );
 };
 
-const QuizForm = () => {
+interface Props {
+  quizId: string;
+};
+
+const QuizForm = ({ quizId }: Props) => {
+  const { data: quiz, isLoading, isError, error } = useQuiz(quizId);
+  
+  
   // single choice is '', multiple is []
   const initialValues: QuizFormValues = mockQuizData.reduce((acc, q) => {
     acc[q.id] = q.type === 'single' ? '' : [];
@@ -153,8 +161,17 @@ const QuizForm = () => {
     },
   });
 
+  if (isLoading) return <div>Loading quiz...</div>;
+  if (isError) return <div>Error loading quiz: {error.message}</div>;
+
   return (
     <div className="mx-auto max-w-4xl p-8 bg-white shadow-lg rounded-lg">
+      <div>
+      <h2>{quiz.title}</h2>
+      <p>ID: {quiz.id}</p>
+      <p>Published: {quiz.isPublished ? 'Yes' : 'No'}</p>
+    </div>
+      
       <h1 className="text-3xl font-bold mb-6">Test quiz form</h1>
       
       <form
