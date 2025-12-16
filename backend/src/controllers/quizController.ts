@@ -193,21 +193,21 @@ export const updateQuiz = async (req: Request, res: Response) => {
     
     const id: string = req.params.id;
 
-    const { title, content } = req.body;
+    const { title, is_published } = req.body;
 
-    UPDATE quizzes
-SET title = 'New Title',
-      updated_at = now()
-WHERE id = '...';
+    const [quiz] = await sql`
+      UPDATE quizzes
+      SET
+        title = COALESCE(${title}, title),
+        is_published = COALESCE(${is_published}, is_published),
+        updated_at = now()
+      WHERE id = ${id}
+      RETURNING *;
+    `;
 
-
-    const post = await prisma.post.update({
-      where: {
-        id: Number(req.params.id),
-      },
-      data: { title, content },
-    });
-    res.json(post);
+    
+    
+    res.json(quiz);
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
