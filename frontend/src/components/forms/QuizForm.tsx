@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from "@tanstack/react-form";
 
 import {
@@ -14,23 +14,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useQuiz } from '@/hooks/useQuizzes';
-
-
-interface AnswerOption {
-  id: string;
-  text: string;
-}
-
-interface Question {
-  id: string;
-  text: string;
-  type: "single" | "multiple";
-  answerOptions: AnswerOption[];
-}
+import type { QuestionViewTodo } from '@/interfaces';
 
 type QuizFormValues = Record<string, string | string[]>;
 
-const mockQuizData: Question[] = [
+const mockQuizData: QuestionViewTodo[] = [
   {
     id: "q-a1b2c3d4",
     text: "Which method is used to update state in a functional component?",
@@ -65,7 +53,7 @@ type FieldProp = {
 };
 
 interface SingleChoiceFieldProps {
-  question: Question;
+  question: QuestionViewTodo;
   field: FieldProp; // simplified type
 }
 
@@ -100,7 +88,7 @@ const SingleChoiceField: React.FC<SingleChoiceFieldProps> = ({ question, field }
 };
 
 interface MultipleChoiceFieldProps {
-  question: Question;
+  question: QuestionViewTodo;
   field: FieldProp; // simplified type
 }
 
@@ -146,23 +134,38 @@ interface Props {
 const QuizForm = ({ quizId }: Props) => {
   const { data: quiz, isLoading, isError, error } = useQuiz(quizId);
   
-  
+  /*
   // single choice is '', multiple is []
   const initialValues: QuizFormValues = mockQuizData.reduce((acc, q) => {
     acc[q.id] = q.type === 'single' ? '' : [];
     return acc;
   }, {} as QuizFormValues);
+  */
 
   const form = useForm({
-    defaultValues: initialValues,
+    defaultValues: {},
     onSubmit: async ({ value }) => {
       console.log("Form Submitted:", value);
       alert('Quiz Submitted! Check console for data.');
     },
   });
 
+  const {reset} = form;
+
+  useEffect(() => {
+    if (quiz?.questions) {
+      const newInitialValues: QuizFormValues = quiz.questions.reduce((acc, q) => {
+          acc[q.id] = q.type === 'single' ? '' : []; 
+          return acc;
+      }, {} as QuizFormValues);
+
+      reset(newInitialValues);
+    }
+  }, [quiz, reset]);
+
   if (isLoading) return <div>Loading quiz...</div>;
   if (isError) return <div>Error loading quiz: {error.message}</div>;
+  if (!quiz || !quiz.questions) return <div>Quiz data not found or empty.</div>;
 
   return (
     <div className="mx-auto max-w-4xl p-8 bg-white shadow-lg rounded-lg">
@@ -182,7 +185,7 @@ const QuizForm = ({ quizId }: Props) => {
         }}
         className="space-y-8"
       >
-        {mockQuizData.map((question) => (
+        {quiz.questions.map((question) => (
           <FieldGroup key={question.id}>
             <form.Field
               name={question.id as keyof QuizFormValues}

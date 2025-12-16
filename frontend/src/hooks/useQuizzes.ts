@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {api} from "../api/api";
-import type { QuizWithQuestions } from "@/interfaces";
+import type { QuizResponseOutput, QuizWithQuestions } from "@/interfaces";
 
 // Get all quizzes created by all users
 export function useQuizzes(published?: boolean, byOthers?: boolean) {
@@ -60,7 +60,7 @@ export const useCreateQuiz = () => {
 };
 
 export function useQuiz(quizId: string, withAnswers?: boolean) {
-  return useQuery({
+  return useQuery<QuizResponseOutput, Error>({
     queryKey: ['quizzes', quizId, {withAnswers}],
     queryFn: async () => {
       const url = `/quizzes/${quizId}`;

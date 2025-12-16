@@ -59,3 +59,38 @@ export interface QuizWithQuestions extends Partial<Quiz> {
   answerOptions?: QuizMutateAnswerOptions;
   correctAnswers?: QuizMutateCorrectAnswers;
 }
+
+export interface AnswerOptionViewTodo {
+  id: string;
+  text: string;
+}
+
+export interface QuestionViewTodo {
+  id: string;
+  text: string;
+  type: "single" | "multiple";
+  answerOptions: AnswerOptionViewTodo[];
+}
+
+export interface QuestionOutput {
+    id: string;
+    text: string;
+    type: "single" | "multiple";
+    answerOptions: {
+        id: string;
+        text: string;
+        displayOrder: number;
+    }[];
+    correctAnswers?: {
+        id: string;
+        answerOptionId: string;
+    }[];
+  }
+
+export interface QuizResponseOutput {
+  id: string;
+    title: string;
+    isPublished: boolean;
+    updatedAt: Date;
+    questions?: QuestionOutput[];
+}

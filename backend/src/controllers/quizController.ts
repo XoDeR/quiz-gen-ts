@@ -88,7 +88,7 @@ export const getQuizById = async (req: Request, res: Response) => {
     }[];
     correctAnswers?: {
         id: string;
-        answer_option_id: string;
+        answerOptionId: string;
     }[];
   }
 
@@ -194,7 +194,7 @@ export const getQuizById = async (req: Request, res: Response) => {
             if (questionCorrectAnswers.length > 0) {
                 questionObject.correctAnswers = questionCorrectAnswers.map(ca => ({
                     id: ca.id,
-                    answer_option_id: ca.answerOptionId
+                    answerOptionId: ca.answerOptionId
                 }));
             }
         }
