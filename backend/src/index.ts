@@ -5,6 +5,7 @@ import "dotenv/config"; // does the same as import dotenv + call dotenv.config()
 import { initDb } from "./services/db";
 import authRoutes from "./routes/authRoutes";
 import quizRoutes from "./routes/quizRoutes";
+import submissionRoutes from "./routes/submissionRoutes";
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/quizzes", quizRoutes);
+app.use("/api/submissions", submissionRoutes);
 
 const PORT = process.env.PORT || 5002;
 

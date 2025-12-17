@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useQuiz } from '@/hooks/useQuizzes';
 import type { QuestionViewTodo } from '@/interfaces';
+import { useCreateSubmission } from '@/hooks/useSubmissions';
 
 type QuizFormValues = Record<string, string | string[]>;
 
@@ -133,6 +134,7 @@ interface Props {
 
 const QuizForm = ({ quizId }: Props) => {
   const { data: quiz, isLoading, isError, error } = useQuiz(quizId);
+  const createMutation = useCreateSubmission();
   
   /*
   // single choice is '', multiple is []
@@ -142,9 +144,31 @@ const QuizForm = ({ quizId }: Props) => {
   }, {} as QuizFormValues);
   */
 
+  const createSubmissionOnSuccess = async () => {
+    console.log("create submission call successful");
+  }
+
   const form = useForm({
     defaultValues: {},
     onSubmit: async ({ value }) => {
+      /*
+      value: {
+        question_id: answer_option_id // for single question type
+        question_id: [answer_option_id, answer_option_id] // for multiple question type
+      }
+      
+      */
+
+      const dataForCreate = {
+        quizId: quizId,
+        completed: true,
+        attemptedAnswersData: value,
+      };
+
+      createMutation.mutate(dataForCreate, {
+        onSuccess: createSubmissionOnSuccess,
+      });
+
       console.log("Form Submitted:", value);
       alert('Quiz Submitted! Check console for data.');
     },
