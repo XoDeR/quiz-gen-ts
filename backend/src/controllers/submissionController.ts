@@ -50,11 +50,25 @@ export const createSubmission = async (req: Request, res: Response) => {
 
     const id = uuidv4();
 
-    const [submission] = await sql`
+    interface DBSubmission {
+      id: string;
+      completed: boolean;
+      rating?: string;
+      user_id: string;
+      quiz_id: string;
+    }
+
+    let submission: DBSubmission | undefined = undefined;
+    const [newSubmission] = await sql`
       INSERT INTO submissions (id, completed, user_id, quiz_id) 
       VALUES (${id}, ${completed}, ${user.id}, ${quizId})
       RETURNING *;
     `;
+    submission = {id: newSubmission.id, 
+      completed: newSubmission.completed,
+      user_id: newSubmission.user_id,
+      quiz_id: newSubmission.quiz_id,
+    };
 
     const submissionId = submission.id;
 
@@ -147,26 +161,100 @@ export const createSubmission = async (req: Request, res: Response) => {
 
     if (completed) {
       // completed submission should also calculate result
-      // TODO calc result for submission
-
-      // for multiple choice algo is "partial credit"
-      // w -- weight of a question
-      // n -- number of correct choices
-      // each correct answer adds w * 1/n points to a question
-      // each incorrect answer is worth a penalty -w * 1/n points
       
-      for (const questionWithAnswerOptions of questionWithAnswerOptionsList) {
-        const questionId = questionWithAnswerOptions.questionId;
-        
-        // get total number of answers
-        
-        const correctAnswerOptions = await sql`
-          SELECT answer_option_id
-          FROM correct_answers
-          WHERE question_id = ${questionId};
-        `;
+      // get all questions of the quiz
+      const quizQuestionList = await sql `
+        SELECT id
+        FROM questions
+        WHERE quiz_id = ${quizId}
+      `;
 
+      const totalQuestions = quizQuestionList.length;
+      let points: number = 0.0;
+      for (const quizQuestion of quizQuestionList) {
+        const quizQuestionId = quizQuestion.id;
+        const foundQuestionWithAnswerOptions = questionWithAnswerOptionsList.find(
+          (questionWithAnswerOptions) => questionWithAnswerOptions.questionId === quizQuestionId
+        );
+        if (foundQuestionWithAnswerOptions) {
+          // calc question points
+          // using Pro­por­tion­al Scor­ing
+          // Pro­por­tion­al scor­ing bal­ances the per­cent­age of cor­rect answers select­ed 
+          // with a penal­ty based on incor­rect selec­tions, pre­vent­ing ​"select all" 
+          // strate­gies while fair­ly reward­ing par­tial knowledge.
+          // For­mu­la: Score = (Correct Selections / Total Correct) × (1 - Incorrect Selections / Total Incorrect)
+
+          const questionId = foundQuestionWithAnswerOptions.questionId;
+
+          const allAnswerOptions = await sql`
+            SELECT id
+            FROM answer_options
+            WHERE question_id = ${questionId}
+          `;
+
+          const correctAnswerOptions = await sql`
+            SELECT answer_option_id
+            FROM correct_answers
+            WHERE question_id = ${questionId};
+          `;
+
+          const totalCorrect = correctAnswerOptions.length;
+          const totalIncorrect = allAnswerOptions.length - totalCorrect;
+
+          if (totalCorrect === 0 || totalIncorrect === 0) {
+            console.error("Question score can't be calculated");
+            break;
+          }
+
+          let correctSelections = 0;
+          let incorrectSelections = 0;
+
+          for (const answerOption of allAnswerOptions) {
+            const answerOptionId = answerOption.id;
+            const foundInCorrect = correctAnswerOptions.find((cao) => cao.id === answerOptionId);
+            const shouldBeChecked: boolean = !!foundInCorrect;
+            const foundInGiven = foundQuestionWithAnswerOptions.answerOptionIdList.find((aoi) => aoi === answerOptionId);
+            const checkedInGiven: boolean = !!foundInGiven;
+            if (shouldBeChecked === true) {
+              if (checkedInGiven === true) {
+                correctSelections++; 
+              } else { 
+                incorrectSelections++;
+              }
+            } else {
+              if (checkedInGiven === true) {
+                incorrectSelections++; 
+              } else { 
+                correctSelections++;
+              }
+            }
+          }
+
+          const questionScore = (correctSelections / totalCorrect) * (1 - (incorrectSelections / totalIncorrect));
+
+          // add question points
+          const questionWeight = 1 / totalQuestions;
+          points += questionWeight * questionScore;
+        } else {
+          // no points added for this question
+        }
       }
+      // save calculated points as xx/yy where xx correctly (partially correctly) answered, yy -- number of questions
+      const rating: string = (points * totalQuestions).toFixed(2) + "/" + totalQuestions.toFixed();
+      const [updatedSubmission] = await sql `
+        UPDATE submissions
+        SET
+          rating = ${rating},
+          updated_at = now()
+        WHERE id = ${submissionId}
+        RETURNING *;
+      `;
+
+      submission = {id: updatedSubmission.id, 
+        completed: updatedSubmission.completed,
+        user_id: updatedSubmission.user_id,
+        quiz_id: updatedSubmission.quiz_id,
+      };
     }
 
     await sql`COMMIT`;
