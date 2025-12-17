@@ -106,6 +106,7 @@ export async function initDb() {
       `CREATE TABLE IF NOT EXISTS submissions(
         id UUID PRIMARY KEY,
         result VARCHAR(255) DEFAULT NULL,
+        completed BOOLEAN NOT NULL DEFAULT FALSE,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE
       )`;
