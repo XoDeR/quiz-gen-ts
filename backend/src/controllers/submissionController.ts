@@ -36,7 +36,7 @@ export const createSubmission = async (req: Request, res: Response) => {
     console.log("attemptedAnswersData: ", attemptedAnswersData);
 
     if (!quizId || completed === undefined || !attemptedAnswersData) {
-      return res.status(400).json({ error: "Incorrect data in request" });
+      return res.status(400).json({ error: "Incorrect data in request. no quizId|completed|data" });
     }
 
     await sql`BEGIN`;
@@ -98,52 +98,60 @@ export const createSubmission = async (req: Request, res: Response) => {
       questionWithAnswerOptionsList.push({questionId, answerOptionIdList });
     }
 
+    console.log("usedAnswerOptionIdList: ", usedAnswerOptionIdList);
+
     // validate if questions and answerOptions exist
     let requestDataValid = true;
     const uniqueUsedQuestionIdList = [...new Set(usedQuestionIdList)];
     if (uniqueUsedQuestionIdList.length !== usedQuestionIdList.length) {
+      console.log("questions not unique");
       requestDataValid = false;
     }
     if (uniqueUsedQuestionIdList.length === 0) {
       // no questions answered
+      console.log("no questions answered");
       requestDataValid = false;
     }
     {
       const [result] = await sql`
         SELECT COUNT(id)::int AS found_count
-        FROM answer_options
-        WHERE id IN ANY(${uniqueUsedQuestionIdList})};
+        FROM questions
+        WHERE id = ANY(${uniqueUsedQuestionIdList});
       `;
       const allExist = result.found_count === uniqueUsedQuestionIdList.length;
       if (!allExist) {
         // some used ids don't exist in db
+        console.log("some used ids don't exist in db: questions");
         requestDataValid = false;
       }
     }
 
     const uniqueUsedAnswerOptionIdList = [...new Set(usedAnswerOptionIdList)]; 
-    if (uniqueUsedAnswerOptionIdList !== usedAnswerOptionIdList) {
+    if (uniqueUsedAnswerOptionIdList.length !== usedAnswerOptionIdList.length) {
+      console.log("answer options not unique");
       requestDataValid = false;
     }
     if (uniqueUsedAnswerOptionIdList.length === 0) {
       // no answer options given
+      console.log("no answer options given");
       requestDataValid = false;
     }
     {
       const [result] = await sql`
         SELECT COUNT(id)::int AS found_count
         FROM answer_options
-        WHERE id IN ANY(${uniqueUsedAnswerOptionIdList})};
+        WHERE id = ANY(${uniqueUsedAnswerOptionIdList});
       `;
       const allExist = result.found_count === uniqueUsedAnswerOptionIdList.length;
       if (!allExist) {
         // some used ids don't exist in db
+        console.log("some used ids don't exist in db: answer options");
         requestDataValid = false;
       }
     }
     if (!requestDataValid) {
       await sql`ROLLBACK`;
-      return res.status(400).json({ error: "Incorrect data in request" });
+      return res.status(400).json({ error: "Incorrect data in request: questions, answerOptions" });
     }
 
     // all used ids are validated
@@ -193,7 +201,7 @@ export const createSubmission = async (req: Request, res: Response) => {
           `;
 
           const correctAnswerOptions = await sql`
-            SELECT answer_option_id
+            SELECT answer_option_id AS id
             FROM correct_answers
             WHERE question_id = ${questionId};
           `;
@@ -231,7 +239,11 @@ export const createSubmission = async (req: Request, res: Response) => {
           }
 
           const questionScore = (correctSelections / totalCorrect) * (1 - (incorrectSelections / totalIncorrect));
-
+          console.log("correctSelections:", correctSelections);
+          console.log("totalCorrect:", totalCorrect);
+          console.log("incorrectSelections:", incorrectSelections);
+          console.log("totalIncorrect:", totalIncorrect);
+          console.log("questionScore:", questionScore);
           // add question points
           const questionWeight = 1 / totalQuestions;
           points += questionWeight * questionScore;
@@ -240,11 +252,11 @@ export const createSubmission = async (req: Request, res: Response) => {
         }
       }
       // save calculated points as xx/yy where xx correctly (partially correctly) answered, yy -- number of questions
-      const rating: string = (points * totalQuestions).toFixed(2) + "/" + totalQuestions.toFixed();
+      const result: string = (points * totalQuestions).toFixed(2) + "/" + totalQuestions.toFixed();
       const [updatedSubmission] = await sql `
         UPDATE submissions
         SET
-          rating = ${rating},
+          result = ${result},
           updated_at = now()
         WHERE id = ${submissionId}
         RETURNING *;
@@ -260,8 +272,22 @@ export const createSubmission = async (req: Request, res: Response) => {
     await sql`COMMIT`;
 
     res.status(201).json(submission);
-  } catch (error) {
-    
+  } catch (error: any) {
+    await sql`ROLLBACK`;
+    console.error("Error fetching quizzes:");
+    console.error("Message:", error.message);
+    console.error("Stack:", error.stack);
+
+    if (error.code) {
+      console.error("Postgres error code:", error.code);
+    }
+    if (error.detail) {
+      console.error("Detail:", error.detail);
+    }
+    if (error.hint) {
+      console.error("Hint:", error.hint);
+    }
+    res.status(500).json({ error: "Server error" });
   }
 }
 
