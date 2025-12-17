@@ -108,7 +108,9 @@ export async function initDb() {
         result VARCHAR(255) DEFAULT NULL,
         completed BOOLEAN NOT NULL DEFAULT FALSE,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE
+        quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        updated_at TIMESTAMPTZ DEFAULT now()
       )`;
     // attempted_answers
     await sql
