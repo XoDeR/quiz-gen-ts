@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import type { OriginalQuizData } from "@/interfaces";
 import { Save } from "lucide-react";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useUpdateQuiz } from "@/hooks/useQuizzes";
 
 const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
   title: "React Basics",
@@ -40,22 +40,12 @@ const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
   ]
 };
 
-
-
-async function saveDataToBackend(data: any) {
-  const res = await fetch("/api/save", {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) throw new Error("Save failed");
-  return res.json();
-}
-
 export default function QuizEdit() {
   const [discardEventId, setDiscardEventId] = useState(0);
   const [saveEventId, setSaveEventId] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
+
+  const mutation = useUpdateQuiz();
 
   const handleDiscardClicked = () => {
     setDiscardEventId((prev) => prev + 1);
@@ -65,21 +55,17 @@ export default function QuizEdit() {
     setSaveEventId((prev) => prev + 1);
   }
 
-  const mutation = useMutation({
-    mutationFn: saveDataToBackend,
-    onSuccess: () => setErrors([]),
-    onError: (err: any) => setErrors([err.message]),
-  });
-
   const handleSaveResult = (result: { success: boolean; data?: any; errors?: string[] }) => {
     if (result.success) {
       console.log("Data sent to backend: ", result.data);
-      //mutation.mutate(result.data);
+      mutation.mutate(result.data, {
+        onSuccess: () => setErrors([]),
+        onError: (err: any) => setErrors([err.message]),
+      });
     } else {
       setErrors(result.errors ?? []);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-zinc-50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-zinc-900">
