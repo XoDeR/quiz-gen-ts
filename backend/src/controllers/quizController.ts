@@ -50,11 +50,26 @@ export const getUserQuizzes = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const quizzes = await sql`
-      SELECT id, title, is_published
-      FROM quizzes
-      WHERE user_id = ${user.id};
-    `;
+    interface QuizCreatedByUser {
+      id: string;
+      title: string;
+      isPublished: boolean;
+      updatedAt: Date;
+      participantCount: number;
+    };
+
+    const quizzes: QuizCreatedByUser[] = await sql`
+      SELECT 
+        q.id, 
+        q.title, 
+        q.is_published AS "isPublished",
+        q.updated_at AS "updatedAt",
+        COUNT(DISTINCT s.user_id)::int AS "participantCount"
+      FROM quizzes q
+      LEFT JOIN submissions s ON q.id = s.quiz_id
+      WHERE q.user_id = ${user.id}
+      GROUP BY q.id;
+    ` as QuizCreatedByUser[];
 
     res.status(200).json(quizzes);
   } catch (error) {

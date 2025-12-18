@@ -54,6 +54,14 @@ export interface Quiz {
   isPublished: boolean;
 };
 
+export interface QuizCreatedByUser {
+  id: string;
+  title: string;
+  isPublished: boolean;
+  updatedAt: Date;
+  participantCount: number;
+};
+
 export interface QuizDiff {
   quiz: { 
     title?: string;

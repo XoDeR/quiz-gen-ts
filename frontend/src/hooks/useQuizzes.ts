@@ -91,7 +91,7 @@ export const useUpdateQuiz = () => {
 export const useDeleteQuiz = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api.protected.delete(`/quizzes/${id}`),
+    mutationFn: (id: string) => api.protected.delete(`/quizzes/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
     },
