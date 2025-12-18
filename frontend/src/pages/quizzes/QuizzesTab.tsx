@@ -2,7 +2,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -16,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import type { QuizMutateAnswerOptions, QuizMutateCorrectAnswers, QuizMutateQuestions, QuizWithQuestions } from "@/interfaces";
 
 function getData(): QuizToSolve[] {
-  // Fetch data from your API here.
   return [
     {
       id: "1", // id of quiz
