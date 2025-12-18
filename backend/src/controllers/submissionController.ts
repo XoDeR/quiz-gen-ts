@@ -227,13 +227,13 @@ export const createSubmission = async (req: Request, res: Response) => {
               if (checkedInGiven === true) {
                 correctSelections++; 
               } else { 
-                incorrectSelections++;
+                ; // no op
               }
             } else {
               if (checkedInGiven === true) {
                 incorrectSelections++; 
               } else { 
-                correctSelections++;
+                ; // no op
               }
             }
           }
