@@ -14,6 +14,21 @@ export const getSubmissions = async (req: Request, res: Response) => {
 
 // get all submissions by current user
 export const getUserSubmissions = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+
+    if (!user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // get completed param from the query
+    const { completed } = req.query;
+    // can be "true", "false" or undefined
+    
+
+  } catch (error) {
+    
+  }
 }
 
 export const getSubmissionById = async (req: Request, res: Response) => {

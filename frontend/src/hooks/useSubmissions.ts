@@ -6,11 +6,15 @@ interface SubmissionWithAttemptedAnswers {
 }
 
 // Get submissions created by the current user
-export function useUserSubmissions() {
+export function useUserSubmissions(completed?: boolean) {
   return useQuery({
-    queryKey: ['submissions'],
+    queryKey: ['submissions', { completed }],
     queryFn: async () => {
-      const res = await api.protected.get('/submissions/me');
+      const res = await api.protected.get('/submissions/me', {
+        params: {
+          completed,
+        }
+      });
       if (res.status !== 200) throw new Error('Failed to fetch submissions');
       return res.data;
     },
