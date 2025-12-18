@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from "@tanstack/react-form";
 
 import {
@@ -135,29 +135,42 @@ interface Props {
 const QuizForm = ({ quizId }: Props) => {
   const { data: quiz, isLoading, isError, error } = useQuiz(quizId);
   const createMutation = useCreateSubmission();
+  const [formErrorMessage, setFormErrorMessage] = useState("");
   
-  /*
-  // single choice is '', multiple is []
-  const initialValues: QuizFormValues = mockQuizData.reduce((acc, q) => {
-    acc[q.id] = q.type === 'single' ? '' : [];
-    return acc;
-  }, {} as QuizFormValues);
-  */
-
   const createSubmissionOnSuccess = async () => {
-    console.log("create submission call successful");
+    console.log("Quiz submitted successfully");
+  }
+
+  const saveForLaterOnSuccess = async () => {
+    console.log("Quiz saved successfully");
   }
 
   const form = useForm({
     defaultValues: {},
     onSubmit: async ({ value }) => {
       /*
+      // format:
       value: {
         question_id: answer_option_id // for single question type
         question_id: [answer_option_id, answer_option_id] // for multiple question type
       }
-      
       */
+      if (!quiz || !quiz.questions) {
+        setFormErrorMessage("Nothing to submit. No quiz questions.");
+        return;
+      }
+
+      // validate all fields entered manually
+      const allQuestionsAnswered = quiz.questions.every((q) => {
+        const answer = (value as QuizFormValues)[q.id as keyof QuizFormValues];
+        if (q.type === 'multiple') return Array.isArray(answer) && answer.length > 0;
+        return !!answer;
+      });
+
+      if (!allQuestionsAnswered) {
+        setFormErrorMessage("Please answer all questions before submitting.");
+        return;
+      }
 
       const dataForCreate = {
         quizId: quizId,
@@ -168,9 +181,6 @@ const QuizForm = ({ quizId }: Props) => {
       createMutation.mutate(dataForCreate, {
         onSuccess: createSubmissionOnSuccess,
       });
-
-      console.log("Form Submitted:", value);
-      alert('Quiz Submitted! Check console for data.');
     },
   });
 
@@ -191,16 +201,47 @@ const QuizForm = ({ quizId }: Props) => {
   if (isError) return <div>Error loading quiz: {error.message}</div>;
   if (!quiz || !quiz.questions) return <div>Quiz data not found or empty.</div>;
 
+  const handleSaveForLater = async () => {
+    // validate fields that have values
+    await form.validate('change');
+
+    const hasErrors = form.state.fieldMeta && 
+      Object.values(form.state.fieldMeta).some((meta) => meta?.errors?.length && meta?.errors?.length > 0);
+
+    if (hasErrors) {
+      const message = "Some answers are invalid. Please fix them before saving.";
+      console.error(message);
+      setFormErrorMessage(message);
+      return;
+    }
+
+    // remove empty values
+    const currentValues = form.state.values;
+    const filteredAnswers = Object.fromEntries(
+      Object.entries(currentValues).filter(([_, value]) => {
+        if (Array.isArray(value)) return value.length > 0;
+        return value !== null && value !== undefined && value !== '';
+      })
+    );
+
+    if (Object.entries(filteredAnswers).length === 0) {
+      setFormErrorMessage("There is nothing to save.");
+    }
+
+    const dataForSave = {
+      quizId: quizId,
+      completed: false,
+      attemptedAnswersData: filteredAnswers,
+    };
+
+    createMutation.mutate(dataForSave, {
+      onSuccess: saveForLaterOnSuccess,
+    });
+  }
+  
   return (
     <div className="mx-auto max-w-4xl p-8 bg-white shadow-lg rounded-lg">
-      <div>
-      <h2>{quiz.title}</h2>
-      <p>ID: {quiz.id}</p>
-      <p>Published: {quiz.isPublished ? 'Yes' : 'No'}</p>
-    </div>
-      
-      <h1 className="text-3xl font-bold mb-6">Test quiz form</h1>
-      
+      <h1 className="text-3xl font-bold mb-6">{quiz.title}</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -209,20 +250,30 @@ const QuizForm = ({ quizId }: Props) => {
         }}
         className="space-y-8"
       >
-        {quiz.questions.map((question) => (
-          <FieldGroup key={question.id}>
+        <FieldGroup >
+          {quiz.questions.map((question) => (
             <form.Field
+              key={question.id}
               name={question.id as keyof QuizFormValues}
               validators={{
-                  onChange: ({ value }) => {
-                      if (question.type === 'single' && !value) {
-                          return 'Please select an option.';
-                      }
-                      if (question.type === 'multiple' && (value as string[]).length === 0) {
-                          return 'Please select at least one option.';
-                      }
-                      return undefined;
-                  },
+                onChange: ({ value }) => {
+                  if (formErrorMessage) {
+                    setFormErrorMessage("");
+                  }
+                  // if the field is empty
+                  // it's valid for "Save for later"
+                  if (!value || (Array.isArray(value) && value.length === 0)) {
+                    return undefined; 
+                  }
+                    
+                  if (question.type === 'single' && !value) {
+                    return 'Please select an option.';
+                  }
+                  if (question.type === 'multiple' && (value as string[]).length === 0) {
+                    return 'Please select at least one option.';
+                  }
+                  return undefined;
+                },
               }}
               children={(field) => (
                 <>
@@ -234,12 +285,23 @@ const QuizForm = ({ quizId }: Props) => {
                 </>
               )}
             />
-          </FieldGroup>
-        ))}
+          ))}
+        </FieldGroup>
+        
+        {formErrorMessage && (
+          <div className='p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg'>
+            { formErrorMessage }
+          </div>
+        )}
 
-        <Button type="submit" className="w-full">
-          Submit Quiz
-        </Button>
+        <div className="flex justify-between">
+          <Button type="submit" className="">
+            Submit Quiz
+          </Button>
+          <Button type="button" variant="default" className="" onClick={handleSaveForLater}>
+            Save for later
+          </Button>
+        </div>
       </form>
     </div>
   );
