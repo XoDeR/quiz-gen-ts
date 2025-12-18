@@ -219,7 +219,11 @@ export const createQuiz = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { title, isPublished } = req.body;
+    if (!req.body.quiz) {
+      return res.status(400).json({ error: "Incorrect data in request: quiz should be in request body" });
+    }
+
+    const { title, isPublished } = req.body.quiz;
     const id = uuidv4();
 
     await sql`BEGIN`;

@@ -58,10 +58,12 @@ export default function QuizEdit() {
   const handleSaveResult = (result: { success: boolean; data?: any; errors?: string[] }) => {
     if (result.success) {
       console.log("Data sent to backend: ", result.data);
+      /*
       mutation.mutate(result.data, {
         onSuccess: () => setErrors([]),
         onError: (err: any) => setErrors([err.message]),
       });
+      */
     } else {
       setErrors(result.errors ?? []);
     }

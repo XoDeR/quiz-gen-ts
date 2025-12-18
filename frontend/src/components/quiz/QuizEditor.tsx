@@ -1,5 +1,5 @@
-import type { AnswerOption, OriginalQuizData, Question } from "@/interfaces";
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import type { AnswerOption, OriginalQuizData, Question, QuizDiff } from "@/interfaces";
+import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -73,28 +73,26 @@ const QuizEditor = ({
   onSaveResult: (result: SaveResult) => void;
 }) => {
 
-  const [quizEditorState, setQuizEditorState] = useState({ field: "" });
-
   useEffect(() => {
     if (discardEventId > 0) {
       handleCancel();
-      
-      // reset to initial
-      setQuizEditorState({ field: "" });
     }
   }, [discardEventId]);
 
   useEffect(() => {
     if (saveEventId > 0) {
-      /*
-      if (!quizEditorState.field) {
-        onSaveResult({ success: false, errors: ["Field cannot be empty"] });
+      // saving
+      console.log("Saving...");
+      const payload: QuizDiff | undefined = handleSave();
+      if (!payload) {
+        console.log("Errors while forming data to send");
+        console.log(error);
+        onSaveResult({ success: false, errors: [error || ""] });
       } else {
-        onSaveResult({ success: true, data: quizEditorState });
+        // send data to parent
+        console.log("Sending data to parent");
+        onSaveResult({ success: true, data: payload });
       }
-      */
-      // send data to parent
-      onSaveResult({ success: true, data: quizEditorState });
     }
   }, [saveEventId]);
 
@@ -113,8 +111,50 @@ const QuizEditor = ({
   const [error, setError] = useState<string | null>(null);
 
   // save/discard
-  const handleSave = (): void => { 
+  const handleSave = (): QuizDiff | undefined => { 
+    setError(null);
 
+    // Validation
+    if (!quizTitle.trim()) {
+      setError("Please enter a quiz title.");
+      return;
+    }
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      if (!q.text.trim()) {
+        setError(`Question ${i + 1} is missing text.`);
+        return;
+      }
+      if (q.answerOptions.length < 2) {
+        setError(`Question ${i + 1} must have at least 2 answer options.`);
+        return;
+      }
+      const correctCount = q.answerOptions.filter(ao => ao.isCorrect).length;
+      if (q.type === 'single' && correctCount !== 1) {
+        setError(`Question ${i + 1} (Single Select) must have exactly one correct answer.`);
+        return;
+      }
+      if (q.type === 'multiple' && correctCount < 1) {
+        setError(`Question ${i + 1} (Multiple Select) must have at least one correct answer.`);
+        return;
+      }
+      for (const ao of q.answerOptions) {
+        if (!ao.text.trim()) {
+          setError(`An answer option in Question ${i + 1} is missing text.`);
+          return;
+        }
+      }
+    }
+    //-- Validation
+
+    const payload: QuizDiff = calculateDiff();
+
+    if (Object.keys(payload).length === 0) {
+      setError("No changes detected since loading the quiz.");
+      return;
+    }
+
+    return payload;
   }
 
   const handleCancel = (): void => {
@@ -125,7 +165,197 @@ const QuizEditor = ({
       setError(null);
     }
   }
-  
+
+  const calculateDiff = useCallback((): QuizDiff => {
+    // for easy diffing
+    const originalBackendData = originalQuizEditorState;
+
+    // questions content and order
+    const originalQMap = new Map(originalBackendData.questions.map(q => [q.id, q]));
+
+    const originalQOrderMap = new Map<string, number>(
+      originalBackendData.questions.map((q, index) => [q.id, index])
+    );
+
+    // answer options order
+    const originalOOrderMap = new Map<string, Map<string, number>>();
+    originalBackendData.questions.forEach(q => {
+      const qMap = new Map<string, number>();
+      q.answerOptions.forEach((ao, index) => qMap.set(ao.id, index));
+      originalOOrderMap.set(q.id, qMap);
+    });
+
+    // answer option to correct answer
+    const originalAOCAMap = new Map<string, string>();
+    originalBackendData.questions.forEach(q => {
+      q.correctAnswers.forEach(ca => originalAOCAMap.set(ca.answerOptionId, ca.id));
+    });
+
+    const diff: QuizDiff = {
+      quiz: { title: undefined, isPublished: undefined }, 
+      questions: { create: [], update: [], delete: [] },
+      answerOptions: { create: [], update: [], delete: [] },
+      correctAnswers: { create: [], delete: [] }
+    };
+
+    if (quizTitle !== originalTitle) {
+      diff.quiz.title =  quizTitle;
+    }
+
+    // always set isPublished as it is expected
+    // TODO: change isPublished later if needed
+    diff.quiz.isPublished =  true;
+
+    // handle create and update
+    questions.forEach((currentQ, qIndex) => {
+      const originalQ = originalQMap.get(currentQ.id);
+
+      let needsQUpdate = false;
+      let qUpdate: { id: string, text?: string, type?: 'single' | 'multiple', display_order?: number } = { id: currentQ.id };
+
+      if (!originalQ) {
+        // created
+        diff.questions.create.push({
+          id: currentQ.id,
+          text: currentQ.text,
+          type: currentQ.type,
+          display_order: qIndex,
+        });
+      } else {
+        // existing, check for updates
+
+        // text/type change
+        if (originalQ.text !== currentQ.text) { qUpdate.text = currentQ.text; needsQUpdate = true; }
+        if (originalQ.type !== currentQ.type) { qUpdate.type = currentQ.type; needsQUpdate = true; }
+
+        // order change
+        const originalQIndex = originalQOrderMap.get(currentQ.id);
+        if (originalQIndex !== undefined && originalQIndex !== qIndex) {
+          qUpdate.display_order = qIndex;
+          needsQUpdate = true;
+        }
+
+        if (needsQUpdate) {
+          diff.questions.update.push(qUpdate);
+        }
+      }
+
+      // answerOptions and correctAnswers within current question
+      const originalAOMap = originalQ ? new Map(originalQ.answerOptions.map(ao => [ao.id, ao])) : new Map();
+      const originalOptionsOrder = originalOOrderMap.get(currentQ.id);
+
+      currentQ.answerOptions.forEach((currentAO, aoIndex) => {
+        const originalAO = originalAOMap.get(currentAO.id);
+        let needsAOUpdate = false;
+        let aoUpdate: { id: string, text?: string, display_order?: number } = { id: currentAO.id };
+
+        if (!originalAO) {
+          // created
+          diff.answerOptions.create.push({
+            id: currentAO.id,
+            question_id: currentQ.id, // The question id is always known (either original or temp)
+            text: currentAO.text,
+            display_order: aoIndex,
+          });
+        } else {
+          // existing, check for updates
+
+          // text change
+          if (originalAO.text !== currentAO.text) { aoUpdate.text = currentAO.text; needsAOUpdate = true; }
+
+          // order change
+          const originalAOIndex = originalOptionsOrder?.get(currentAO.id);
+          if (originalAOIndex !== undefined && originalAOIndex !== aoIndex) {
+            aoUpdate.display_order = aoIndex;
+            needsAOUpdate = true;
+          }
+
+          if (needsAOUpdate) {
+            diff.answerOptions.update.push(aoUpdate);
+          }
+        }
+
+        // correct answer
+        // If it's correct now AND it wasn't originally correct, create a new correctAnswer link
+        const wasCorrectOriginally = originalAOCAMap.has(currentAO.id);
+        if (currentAO.isCorrect && !wasCorrectOriginally) {
+          // We send the question id and the answerOption id, no id for the correctanswer is needed
+          diff.correctAnswers.create.push({
+            question_id: currentQ.id,
+            answer_option_id: currentAO.id,
+          });
+        }
+      });
+    });
+
+    // handle delete and correctAnswers delete
+    const currentQMap = new Map(questions.map(q => [q.id, q]));
+
+    for (const originalQ of originalBackendData.questions) {
+      const currentQ = currentQMap.get(originalQ.id);
+
+      if (!currentQ) {
+        // deleted question
+        diff.questions.delete.push(originalQ.id);
+
+        // delete associated correctAnswers 
+        // (answerOptions are deleted implicitly or via separate answerOptions delete)
+        originalQ.correctAnswers.forEach(ca => {
+          diff.correctAnswers.delete.push(ca.id);
+        });
+        continue;
+      }
+
+      // deleted answerOption
+      const currentAOMap = new Map(currentQ.answerOptions.map(ao => [ao.id, ao]));
+
+      for (const originalAO of originalQ.answerOptions) {
+        const currentAO = currentAOMap.get(originalAO.id);
+        const originalCAId = originalAOCAMap.get(originalAO.id);
+
+        if (!currentAO) {
+          // deleted answerOption
+          diff.answerOptions.delete.push(originalAO.id);
+          // if original option was correct, delete correctAnswer
+          if (originalCAId) {
+            diff.correctAnswers.delete.push(originalCAId);
+          }
+        } else {
+          // correctAnswer delete (original was correct, but now it's not)
+          const wasCorrect = !!originalCAId;
+          const isCorrectNow = currentAO.isCorrect;
+
+          if (wasCorrect && !isCorrectNow) {
+            // correctAnswer was present originally, but the user unmarked it
+            // delete the correctAnswer object
+            diff.correctAnswers.delete.push(originalCAId!);
+          }
+        }
+      }
+    }
+
+    // cleanup: remove empty arrays and empty keys
+    // TODO this cleanup should be removed
+    /*
+    Object.keys(diff).forEach(key => {
+      const sub = diff[key as keyof QuizDiff];
+      if (sub && typeof sub === 'object') {
+        const hasContent = Object.values(sub).some(val => {
+          if (Array.isArray(val)) {
+            return val.length > 0;
+          }
+          return val !== undefined && val !== null && val !== '';
+        });
+        if (!hasContent) {
+          delete diff[key as keyof QuizDiff];
+        }
+      }
+    });
+    */
+
+    return diff;
+  }, [quizTitle, originalTitle, questions]);
+    
   //-- save/discard
 
   // Functions to update state
