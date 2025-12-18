@@ -1,11 +1,10 @@
 import {api} from "@/api/api";
 import LoginForm from "@/components/forms/LoginForm";
-import QuizForm from "@/components/forms/QuizForm";
 import { useAuthStore } from "@/store/auth";
 import { useNavigate } from "react-router";
 
 export default function Login() {
-  const { user, fetchMe, logout } = useAuthStore();
+  const { fetchMe } = useAuthStore();
   const navigate = useNavigate();
 
   const login = async () => {
