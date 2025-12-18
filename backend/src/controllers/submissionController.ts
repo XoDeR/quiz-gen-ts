@@ -21,13 +21,43 @@ export const getUserSubmissions = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // get completed param from the query
-    const { completed } = req.query;
-    // can be "true", "false" or undefined
-    
+    const userId = user.id;
 
-  } catch (error) {
+    // get completed param from the query
+    // default to true unless explicitly set "false"
+    const completedValue: boolean = req.query.completed === "false" ? false : true;
+
+    interface QuizSubmission {
+      submissionId: string;
+      submissionResult: string;
+      submissionCompleted: boolean;
+      submissionUserId: string;
+      submissionUpdatedAt: Date;
+      quizId: string;
+      quizTitle: string;
+      quizIsPublished: boolean;
+    };
+
+    const submissions: QuizSubmission[] = await sql`
+      SELECT 
+        s.id AS "submissionId", 
+        s.result AS "submissionResult", 
+        s.completed AS "submissionCompleted", 
+        s.user_id AS "submissionUserId", 
+        s.updated_at AS "submissionUpdatedAt",
+        q.id AS "quizId",
+        q.title AS "quizTitle",
+        q.is_published AS "quizIsPublished"
+      FROM submissions s
+      JOIN quizzes q ON s.quiz_id = q.id
+      WHERE s.user_id = ${userId} AND s.completed = ${completedValue}
+      ORDER BY s.updated_at DESC
+    ` as QuizSubmission[];
     
+    res.status(200).json(submissions);
+  } catch (error) {
+    console.error("Error fetching submissions:", error);
+    res.status(500).json({ error: "Server error" });
   }
 }
 

@@ -3,29 +3,30 @@ import { useNavigate } from 'react-router';
 
 import { getInProgressColumns, type QuizInProgress } from "./InProgressColumns"
 import { DataTable } from "./InProgressDataTable";
+import { useUserSubmissions } from "@/hooks/useSubmissions";
 
 
-function getData(): QuizInProgress[] {
+function getData(): Partial<QuizInProgress>[] {
   return [
     {
-      id: "1", // id of quiz
-      title: "Quiz 1", // title of quiz
-      updated_at: new Date().toLocaleString(), // updated_at of submission
+      quizId: "1", // id of quiz
+      quizTitle: "Quiz 1", // title of quiz
+      submissionUpdatedAt: new Date(), // updated_at of submission
     },
     {
-      id: "2",
-      title: "Quiz 2",
-      updated_at: new Date().toLocaleString(),
+      quizId: "2",
+      quizTitle: "Quiz 2",
+      submissionUpdatedAt: new Date(),
     },
     {
-      id: "3",
-      title: "Quiz 3",
-      updated_at: new Date().toLocaleString(),
+      quizId: "3",
+      quizTitle: "Quiz 3",
+      submissionUpdatedAt: new Date(),
     },
     {
-      id: "4",
-      title: "Quiz 4",
-      updated_at: new Date().toLocaleString(),
+      quizId: "4",
+      quizTitle: "Quiz 4",
+      submissionUpdatedAt: new Date(),
     },
   ];
 }
@@ -36,7 +37,9 @@ export default function InProgressTab() {
   // get user's submissions with status completed === false
   // TO BE IMPLEMENTED
   // const { data: quizzes, isLoading } = useUserSubmissions(false);
-  const isLoading = false;
+  const { data: quizSubmissions, isLoading } = useUserSubmissions(false);
+
+  console.log("quizSubmissions: ", quizSubmissions);
 
   const handleOpenQuiz = (quizId: string) => {
     console.log(`Opening quiz with ID: ${quizId}`);
@@ -63,9 +66,8 @@ export default function InProgressTab() {
         {isLoading ? (
           <p>Loading...</p>
         ) : (
-          // quizzes.map(quiz => <div key={quiz.id}>{quiz.title}</div>)
           <div className="container mx-auto py-10">
-            <DataTable columns={columns} data={mockData} />
+            <DataTable columns={columns} data={quizSubmissions} />
           </div>
         )}
       </CardContent>

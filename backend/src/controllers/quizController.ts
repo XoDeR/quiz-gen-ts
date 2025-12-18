@@ -35,7 +35,7 @@ export const getQuizzes = async (req: Request, res: Response) => {
       `;
     }
 
-    res.json(quizzes);
+    res.status(200).json(quizzes);
   } catch (error) {
     console.error("Error fetching quizzes:", error);
     res.status(500).json({ error: "Server error" });
@@ -56,7 +56,7 @@ export const getUserQuizzes = async (req: Request, res: Response) => {
       WHERE user_id = ${user.id};
     `;
 
-    res.json(quizzes);
+    res.status(200).json(quizzes);
   } catch (error) {
     console.error("Error fetching quizzes:", error);
     res.status(500).json({ error: "Server error" });
