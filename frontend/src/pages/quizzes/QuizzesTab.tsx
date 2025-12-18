@@ -9,7 +9,7 @@ import { useQuizzes } from "@/hooks/useQuizzes";
 
 import { useNavigate } from 'react-router';
 
-import { getQuizzesToSolveColumns, type QuizToSolve } from "./QuizzesColumns"
+import { getQuizzesToSolveColumns } from "./QuizzesColumns"
 import { DataTable } from "./QuizzesDataTable";
 
 export default function QuizzesTab() {
