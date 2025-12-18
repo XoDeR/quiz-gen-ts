@@ -77,6 +77,8 @@ const QuizEditor = ({
 
   useEffect(() => {
     if (discardEventId > 0) {
+      handleCancel();
+      
       // reset to initial
       setQuizEditorState({ field: "" });
     }
@@ -107,6 +109,24 @@ const QuizEditor = ({
   // Editable state
   const [quizTitle, setQuizTitle] = useState(originalTitle);
   const [questions, setQuestions] = useState<Question[]>(originalQuestions);
+
+  const [error, setError] = useState<string | null>(null);
+
+  // save/discard
+  const handleSave = (): void => { 
+
+  }
+
+  const handleCancel = (): void => {
+    const confirmed = window.confirm("Are you sure you want to discard changes?");
+    if (confirmed) {
+      setQuizTitle(originalTitle);
+      setQuestions(normalizeQuestions(originalQuizEditorState));
+      setError(null);
+    }
+  }
+  
+  //-- save/discard
 
   // Functions to update state
 
@@ -572,6 +592,13 @@ const QuizEditor = ({
       >
         <Plus size={24} /> Add New Question
       </Button>
+
+      {/* Errors */}
+      <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-zinc-200 p-4 -mx-4 sm:-mx-6 lg:-mx-8 mt-10 flex items-center justify-between z-10">
+        <div className="text-sm text-red-500 font-medium px-4">
+          {error}
+        </div>
+      </div>
     </div>
 
   )
