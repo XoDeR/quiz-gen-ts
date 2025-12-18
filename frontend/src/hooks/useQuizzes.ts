@@ -76,3 +76,24 @@ export function useQuiz(quizId: string, withAnswers?: boolean) {
     },
   });
 };
+
+export const useUpdateQuiz = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (updatedQuiz: QuizWithQuestions) =>
+      api.protected.put(`/quizzes/${updatedQuiz.id}`, updatedQuiz),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+  });
+};
+
+export const useDeleteQuiz = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.protected.delete(`/quizzes/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+    },
+  });
+};
