@@ -2,44 +2,9 @@ import QuizEditor from "@/components/quiz/QuizEditor";
 import { Button } from "@/components/ui/button";
 import type { OriginalCorrectAnswer, OriginalQuestion, OriginalQuizData, QuizResponseOutput } from "@/interfaces";
 import { BookOpenCheck, Save } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuiz, useUpdateQuiz } from "@/hooks/useQuizzes";
 import { useParams } from "react-router";
-
-const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
-  title: "React Basics",
-  isPublished: false,
-  questions: [
-    {
-      id: "q-a1b2c3d4",
-      text: "Which method is used to update state in a functional component?",
-      type: "single",
-      answerOptions: [
-        { id: "o-e5f6g7h8", text: "this.setState()" },
-        { id: "o-i9j0k1l2", text: "useState hook's setter function" },
-        { id: "o-m3n4o5p6", text: "forceUpdate()" }
-      ],
-      correctAnswers: [
-        { id: "ca-x1y2z3", answerOptionId: "o-i9j0k1l2" }
-      ]
-    },
-    {
-      id: "q-q7r8s9t0",
-      text: "Which of the following are benefits of using React?",
-      type: "multiple",
-      answerOptions: [
-        { id: "o-u1v2w3x4", text: "Virtual DOM for performance" },
-        { id: "o-y5z6a7b8", text: "Server-side rendering only" },
-        { id: "o-c9d0e1f2", text: "Reusable components" },
-        { id: "o-g3h4i5j6", text: "Direct manipulation of the real DOM" }
-      ],
-      correctAnswers: [
-        { id: "ca-p9o8i7", answerOptionId: "o-u1v2w3x4" },
-        { id: "ca-d6e5f4", answerOptionId: "o-c9d0e1f2" }
-      ]
-    }
-  ]
-};
 
 export default function QuizEdit() {
   const { quizId } = useParams<{ quizId: string }>();
@@ -48,8 +13,6 @@ export default function QuizEdit() {
     throw new Error("Quiz id is missing from the URL");
   }
 
-  console.log("quizId: ", quizId);
-
   const [discardEventId, setDiscardEventId] = useState(0);
   const [saveEventId, setSaveEventId] = useState(0);
   const [saveAndPublishEventId, setSaveAndPublishEventId] = useState(0);
@@ -57,6 +20,15 @@ export default function QuizEdit() {
 
   const { data: quizResponseOutput, isLoading, isError, error } = useQuiz(quizId, true);
   const mutation = useUpdateQuiz();
+
+  const originalQuizData = useMemo(() => {
+    try {
+      return quizResponseOutput ? mapQuizResponseOutputToOriginalQuizData(quizResponseOutput) : null;
+    } catch (err) {
+      console.error("Data mapping failed:", err);
+      return null;
+    }
+  }, [quizResponseOutput]);
 
   const handleDiscardClicked = () => {
     setDiscardEventId((prev) => prev + 1);
@@ -142,12 +114,9 @@ export default function QuizEdit() {
   if (isLoading) return <div>Loading quiz...</div>;
   if (isError) return <div>Error loading quiz: {error.message}</div>;
   if (!quizResponseOutput || !quizResponseOutput.questions) return <div>Quiz data not found or empty.</div>;
-
-  console.log("quiz: ", quizResponseOutput);
-
-  
-    
-    
+  if (!originalQuizData) {
+    return <div>Quiz data is either not received or not valid.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-zinc-900">
@@ -159,7 +128,6 @@ export default function QuizEdit() {
         </div>
 
         <QuizEditor
-          //originalQuizEditorState={MOCK_ORIGINAL_QUIZ_DATA}
           originalQuizEditorState={originalQuizData}
           discardEventId={discardEventId}
           saveEventId={saveEventId}
