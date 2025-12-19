@@ -434,14 +434,22 @@ export const updateQuiz = async (req: Request, res: Response) => {
     
     const id: string = req.params.id;
 
-    const { title, isPublished } = req.body;
+    if (!req.body.quiz) {
+      return res.status(400).json({ error: "Incorrect data in request: quiz should be in request body" });
+    }
+
+    const { title, isPublished } = req.body.quiz;
+
+    // for edit title could be undefined
+    const newTitle = title ?? null;
+    const newPublished = isPublished ?? null;
 
     await sql`BEGIN`;
     const [quiz] = await sql`
       UPDATE quizzes
       SET
-        title = COALESCE(${title}, title),
-        is_published = COALESCE(${isPublished}, is_published),
+        title = COALESCE(${newTitle}, title),
+        is_published = COALESCE(${newPublished}, is_published),
         updated_at = now()
       WHERE id = ${id}
       RETURNING *;
