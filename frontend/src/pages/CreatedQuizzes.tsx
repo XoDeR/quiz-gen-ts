@@ -34,8 +34,11 @@ export default function CreatedQuizzes() {
   }
 
   const handleDeleteQuiz = (quizId: string) => {
-    console.log(`Deleting quiz with ID: ${quizId}`);
-    deleteQuizMutation.mutate(quizId);
+    const confirmed = window.confirm("Are you sure you want to discard changes?");
+    if (confirmed) {
+      console.log(`Deleting quiz with ID: ${quizId}`);
+      deleteQuizMutation.mutate(quizId);
+    }
   }
 
   const columns = getCreatedQuizzesColumns(handleViewQuiz, handleEditQuiz, handleDeleteQuiz);
