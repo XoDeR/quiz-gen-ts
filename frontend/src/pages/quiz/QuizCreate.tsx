@@ -5,7 +5,8 @@ import type { OriginalQuizData } from "@/interfaces";
 import { Save } from "lucide-react";
 import { useState } from "react";
 
-const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
+// for create original quiz data is always empty
+const emptyOriginalQuizData: OriginalQuizData = {
   title: "",
   isPublished: false,
   questions: [
@@ -49,7 +50,7 @@ export default function QuizCreate() {
         </div>
         
         <QuizEditor 
-          originalQuizEditorState={MOCK_ORIGINAL_QUIZ_DATA}
+          originalQuizEditorState={emptyOriginalQuizData}
           discardEventId={discardEventId}
           saveEventId={saveEventId}
           onSaveResult={handleSaveResult}
