@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import type { OriginalQuizData } from "@/interfaces";
 import { BookOpenCheck, Save } from "lucide-react";
 import { useState } from "react";
-import { useUpdateQuiz } from "@/hooks/useQuizzes";
+import { useQuiz, useUpdateQuiz } from "@/hooks/useQuizzes";
 import { useParams } from "react-router";
 
 const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
@@ -42,12 +42,20 @@ const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
 };
 
 export default function QuizEdit() {
-  const { quizId } = useParams();
+  const { quizId } = useParams<{ quizId: string }>();
+
+  if (!quizId) {
+    throw new Error("Quiz id is missing from the URL");
+  }
+
+  console.log("quizId: ", quizId);
+
   const [discardEventId, setDiscardEventId] = useState(0);
   const [saveEventId, setSaveEventId] = useState(0);
   const [saveAndPublishEventId, setSaveAndPublishEventId] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
 
+  const { data: quiz, isLoading, isError, error } = useQuiz(quizId, true);
   const mutation = useUpdateQuiz();
 
   const handleDiscardClicked = () => {
@@ -85,6 +93,12 @@ export default function QuizEdit() {
       setErrors(result.errors ?? []);
     }
   };
+
+  if (isLoading) return <div>Loading quiz...</div>;
+  if (isError) return <div>Error loading quiz: {error.message}</div>;
+  if (!quiz || !quiz.questions) return <div>Quiz data not found or empty.</div>;
+
+  console.log("quiz: ", quiz);
 
   return (
     <div className="min-h-screen bg-zinc-50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-zinc-900">

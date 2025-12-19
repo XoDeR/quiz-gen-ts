@@ -102,19 +102,19 @@ export interface QuestionViewTodo {
 }
 
 export interface QuestionOutput {
-    id: string;
-    text: string;
-    type: "single" | "multiple";
-    answerOptions: {
-        id: string;
-        text: string;
-        displayOrder: number;
-    }[];
-    correctAnswers?: {
-        id: string;
-        answerOptionId: string;
-    }[];
-  }
+  id: string;
+  text: string;
+  type: "single" | "multiple";
+  answerOptions: {
+      id: string;
+      text: string;
+      displayOrder: number;
+  }[];
+  correctAnswers?: {
+      id: string;
+      answerOptionId: string;
+  }[];
+}
 
 export interface QuizResponseOutput {
   id: string;
