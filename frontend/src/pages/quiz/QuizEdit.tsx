@@ -1,6 +1,6 @@
 import QuizEditor from "@/components/quiz/QuizEditor";
 import { Button } from "@/components/ui/button";
-import type { OriginalQuizData } from "@/interfaces";
+import type { OriginalCorrectAnswer, OriginalQuestion, OriginalQuizData, QuizResponseOutput } from "@/interfaces";
 import { BookOpenCheck, Save } from "lucide-react";
 import { useState } from "react";
 import { useQuiz, useUpdateQuiz } from "@/hooks/useQuizzes";
@@ -55,7 +55,7 @@ export default function QuizEdit() {
   const [saveAndPublishEventId, setSaveAndPublishEventId] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
 
-  const { data: quiz, isLoading, isError, error } = useQuiz(quizId, true);
+  const { data: quizResponseOutput, isLoading, isError, error } = useQuiz(quizId, true);
   const mutation = useUpdateQuiz();
 
   const handleDiscardClicked = () => {
@@ -94,11 +94,60 @@ export default function QuizEdit() {
     }
   };
 
+  function mapQuizResponseOutputToOriginalQuizData(data: QuizResponseOutput): OriginalQuizData {
+    if (!data) {
+      throw new Error("Data is missing");
+    }
+    if (!data.title) {
+      throw new Error("Data 'title' is missing");
+    }
+    if (!data.questions) {
+      throw new Error("Data 'questions' is missing");
+    }
+
+    const originalQuestionList: OriginalQuestion[] = [];
+    for (const questionOutput of data.questions) {
+      const originalAnswerOptionList: { id: string; text: string }[] = [];
+      for (const answerOption of questionOutput.answerOptions) {
+        originalAnswerOptionList.push({ id: answerOption.id, text: answerOption.text });
+      }
+      if (!questionOutput.correctAnswers) {
+        throw new Error("Data 'questions/correctAnswers' is missing");
+      }
+      const originalCorrectAnswerList: OriginalCorrectAnswer[] = [];
+      for (const correctAnswer of questionOutput.correctAnswers) {
+        const originalCorrectAnswer: OriginalCorrectAnswer = {
+          id: correctAnswer.id,
+          answerOptionId: correctAnswer.answerOptionId,
+        };
+        originalCorrectAnswerList.push(originalCorrectAnswer);
+      }
+      
+      const originalQuestion: OriginalQuestion = {
+        id: questionOutput.id,
+        text: questionOutput.text,
+        type: questionOutput.type,
+        answerOptions: originalAnswerOptionList,
+        correctAnswers: originalCorrectAnswerList,
+      }
+      originalQuestionList.push(originalQuestion);
+    }
+    return {
+      title: data.title,
+      isPublished: data.isPublished,
+      questions: originalQuestionList,
+    }
+  }
+
   if (isLoading) return <div>Loading quiz...</div>;
   if (isError) return <div>Error loading quiz: {error.message}</div>;
-  if (!quiz || !quiz.questions) return <div>Quiz data not found or empty.</div>;
+  if (!quizResponseOutput || !quizResponseOutput.questions) return <div>Quiz data not found or empty.</div>;
 
-  console.log("quiz: ", quiz);
+  console.log("quiz: ", quizResponseOutput);
+
+  
+    
+    
 
   return (
     <div className="min-h-screen bg-zinc-50 py-10 px-4 sm:px-6 lg:px-8 font-sans text-zinc-900">
@@ -110,7 +159,8 @@ export default function QuizEdit() {
         </div>
 
         <QuizEditor
-          originalQuizEditorState={MOCK_ORIGINAL_QUIZ_DATA}
+          //originalQuizEditorState={MOCK_ORIGINAL_QUIZ_DATA}
+          originalQuizEditorState={originalQuizData}
           discardEventId={discardEventId}
           saveEventId={saveEventId}
           saveAndPublishEventId={saveAndPublishEventId}
