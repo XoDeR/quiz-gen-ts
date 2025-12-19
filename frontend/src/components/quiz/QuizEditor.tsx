@@ -65,12 +65,16 @@ const QuizEditor = ({
   originalQuizEditorState,
   discardEventId,
   saveEventId,
+  saveAndPublishEventId,
   onSaveResult,
+  onSaveAndPublishResult,
 }: {
   originalQuizEditorState: OriginalQuizData
   discardEventId: number;
   saveEventId: number;
+  saveAndPublishEventId: number;
   onSaveResult: (result: SaveResult) => void;
+  onSaveAndPublishResult: (result: SaveResult) => void;
 }) => {
 
   useEffect(() => {
@@ -89,12 +93,33 @@ const QuizEditor = ({
         console.log(error);
         onSaveResult({ success: false, errors: [error || ""] });
       } else {
+        // modify quiz.published
+        payload.quiz.isPublished = false;
         // send data to parent
         console.log("Sending data to parent");
         onSaveResult({ success: true, data: payload });
       }
     }
   }, [saveEventId]);
+
+  useEffect(() => {
+    if (saveAndPublishEventId > 0) {
+      // saving
+      console.log("Saving with publishing...");
+      const payload: QuizDiff | undefined = handleSave();
+      if (!payload) {
+        console.log("Errors while forming data to send");
+        console.log(error);
+        onSaveResult({ success: false, errors: [error || ""] });
+      } else {
+        // modify quiz.published
+        payload.quiz.isPublished = true;
+        // send data to parent
+        console.log("Sending data to parent");
+        onSaveAndPublishResult({ success: true, data: payload });
+      }
+    }
+  }, [saveAndPublishEventId]);
 
   // Internal Quiz Editor state
 
@@ -201,10 +226,6 @@ const QuizEditor = ({
     if (quizTitle !== originalTitle) {
       diff.quiz.title =  quizTitle;
     }
-
-    // always set isPublished as it is expected
-    // TODO: change isPublished later if needed
-    diff.quiz.isPublished =  true;
 
     // handle create and update
     questions.forEach((currentQ, qIndex) => {

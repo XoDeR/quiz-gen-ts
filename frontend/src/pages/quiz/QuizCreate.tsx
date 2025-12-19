@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useCreateQuiz } from "@/hooks/useQuizzes";
 import type { OriginalQuizData } from "@/interfaces";
 import { Save } from "lucide-react";
+import { BookOpenCheck } from "lucide-react";
 import { useState } from "react";
 
 // for create original quiz data is always empty
@@ -16,6 +17,7 @@ const emptyOriginalQuizData: OriginalQuizData = {
 export default function QuizCreate() {
   const [discardEventId, setDiscardEventId] = useState(0);
   const [saveEventId, setSaveEventId] = useState(0);
+  const [saveAndPublishEventId, setSaveAndPublishEventId] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
 
   const mutation = useCreateQuiz();
@@ -27,8 +29,24 @@ export default function QuizCreate() {
   const handleSaveClicked = () => {
     setSaveEventId((prev) => prev + 1);
   }
+
+  const handleSaveAndPublishClicked = () => {
+    setSaveAndPublishEventId((prev) => prev + 1);
+  }
   
   const handleSaveResult = (result: { success: boolean; data?: any; errors?: string[] }) => {
+    if (result.success) {
+      console.log("Data sent to backend: ", result.data);
+      mutation.mutate(result.data, {
+        onSuccess: () => setErrors([]),
+        onError: (err: any) => setErrors([err.message]),
+      });
+    } else {
+      setErrors(result.errors ?? []);
+    }
+  };
+
+  const handleSaveAndPublishResult = (result: { success: boolean; data?: any; errors?: string[] }) => {
     if (result.success) {
       console.log("Data sent to backend: ", result.data);
       mutation.mutate(result.data, {
@@ -53,7 +71,9 @@ export default function QuizCreate() {
           originalQuizEditorState={emptyOriginalQuizData}
           discardEventId={discardEventId}
           saveEventId={saveEventId}
+          saveAndPublishEventId={saveAndPublishEventId}
           onSaveResult={handleSaveResult}
+          onSaveAndPublishResult={handleSaveAndPublishResult}
         />
 
         {/* Actions buttons */}
@@ -69,6 +89,9 @@ export default function QuizCreate() {
             <Button variant="destructive" onClick={handleDiscardClicked}>Discard Changes</Button>
             <Button onClick={handleSaveClicked} className="gap-2 px-6">
               <Save size={16} /> Save Changes
+            </Button>
+            <Button onClick={handleSaveAndPublishClicked} className="gap-2 px-6">
+              <BookOpenCheck size={16} /> Save &amp; Publish
             </Button>
           </div>
         </div>

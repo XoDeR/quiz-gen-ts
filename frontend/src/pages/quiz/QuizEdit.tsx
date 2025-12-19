@@ -1,9 +1,10 @@
 import QuizEditor from "@/components/quiz/QuizEditor";
 import { Button } from "@/components/ui/button";
 import type { OriginalQuizData } from "@/interfaces";
-import { Save } from "lucide-react";
+import { BookOpenCheck, Save } from "lucide-react";
 import { useState } from "react";
 import { useUpdateQuiz } from "@/hooks/useQuizzes";
+import { useParams } from "react-router";
 
 const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
   title: "React Basics",
@@ -41,8 +42,10 @@ const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
 };
 
 export default function QuizEdit() {
+  const { quizId } = useParams();
   const [discardEventId, setDiscardEventId] = useState(0);
   const [saveEventId, setSaveEventId] = useState(0);
+  const [saveAndPublishEventId, setSaveAndPublishEventId] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
 
   const mutation = useUpdateQuiz();
@@ -55,15 +58,29 @@ export default function QuizEdit() {
     setSaveEventId((prev) => prev + 1);
   }
 
+  const handleSaveAndPublishClicked = () => {
+    setSaveAndPublishEventId((prev) => prev + 1);
+  }
+
   const handleSaveResult = (result: { success: boolean; data?: any; errors?: string[] }) => {
     if (result.success) {
       console.log("Data sent to backend: ", result.data);
-      /*
-      mutation.mutate(result.data, {
+      mutation.mutate({...result.data, id: quizId}, {
         onSuccess: () => setErrors([]),
         onError: (err: any) => setErrors([err.message]),
       });
-      */
+    } else {
+      setErrors(result.errors ?? []);
+    }
+  };
+
+  const handleSaveAndPublishResult = (result: { success: boolean; data?: any; errors?: string[] }) => {
+    if (result.success) {
+      console.log("Data sent to backend: ", result.data);
+      mutation.mutate({...result.data, id: quizId}, {
+        onSuccess: () => setErrors([]),
+        onError: (err: any) => setErrors([err.message]),
+      });
     } else {
       setErrors(result.errors ?? []);
     }
@@ -82,7 +99,9 @@ export default function QuizEdit() {
           originalQuizEditorState={MOCK_ORIGINAL_QUIZ_DATA}
           discardEventId={discardEventId}
           saveEventId={saveEventId}
+          saveAndPublishEventId={saveAndPublishEventId}
           onSaveResult={handleSaveResult}
+          onSaveAndPublishResult={handleSaveAndPublishResult}
         />
 
         {/* Actions buttons */}
@@ -98,6 +117,9 @@ export default function QuizEdit() {
             <Button variant="destructive" onClick={handleDiscardClicked}>Discard Changes</Button>
             <Button onClick={handleSaveClicked} className="gap-2 px-6">
               <Save size={16} /> Save Changes
+            </Button>
+            <Button onClick={handleSaveAndPublishClicked} className="gap-2 px-6">
+              <BookOpenCheck size={16} /> Save &amp; Publish
             </Button>
           </div>
         </div>
