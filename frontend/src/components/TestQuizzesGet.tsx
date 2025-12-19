@@ -1,6 +1,7 @@
 import { useQuizzesTest } from "@/hooks/useQuizzes";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import type { OriginalQuizData } from "@/interfaces";
 
 const MOCK_ORIGINAL_QUIZ_DATA: OriginalQuizData = {
   title: "React Basics",
