@@ -25,7 +25,7 @@ const mockQuizData: QuestionViewTodo[] = [
     text: "Which method is used to update state in a functional component?",
     type: "single",
     answerOptions: [
-      { id: "o-e5f6g7h8", text: "###this.setState()" },
+      { id: "o-e5f6g7h8", text: "this.setState()" },
       { id: "o-i9j0k1l2", text: "useState hook's setter function" },
       { id: "o-m3n4o5p6", text: "forceUpdate()" }
     ],
@@ -35,7 +35,7 @@ const mockQuizData: QuestionViewTodo[] = [
     text: "Which of the following are benefits of using React?",
     type: "multiple",
     answerOptions: [
-      { id: "o-u1v2w3x4", text: "###Virtual DOM for performance" },
+      { id: "o-u1v2w3x4", text: "Virtual DOM for performance" },
       { id: "o-y5z6a7b8", text: "Server-side rendering only" },
       { id: "o-c9d0e1f2", text: "Reusable components" },
       { id: "o-g3h4i5j6", text: "Direct manipulation of the real DOM" }

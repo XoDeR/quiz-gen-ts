@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button"
 import type { QuizCreatedByUser } from "@/interfaces";
 import type { ColumnDef } from "@tanstack/react-table"
+import { Trash2 } from 'lucide-react';
 
 type MutateQuizHandler = (quizId: string) => void;
+type QueryQuizHandler = (quizId: string) => void;
 
 export const getCreatedQuizzesColumns = (
+  onViewQuizHandler: QueryQuizHandler,
   onEditQuizHandler: MutateQuizHandler,
   onDeleteQuizHandler: MutateQuizHandler
 ): ColumnDef<QuizCreatedByUser>[] => {
@@ -32,12 +35,15 @@ export const getCreatedQuizzesColumns = (
       cell: ({ row }) => {
         const quizCreatedByUser = row.original
         return (
-          <div>
-            <Button className="h-8" onClick={() => onEditQuizHandler(quizCreatedByUser.id)}>
-              Open
+          <div className="flex align-center">
+            <Button className="h-8 m-0.5" onClick={() => onViewQuizHandler(quizCreatedByUser.id)}>
+              View
             </Button>
-            <Button className="h-8" onClick={() => onDeleteQuizHandler(quizCreatedByUser.id)}>
-              Delete
+            <Button className="h-8 m-0.5" onClick={() => onEditQuizHandler(quizCreatedByUser.id)}>
+              Edit
+            </Button>
+            <Button className="h-8 m-0.5" onClick={() => onDeleteQuizHandler(quizCreatedByUser.id)}>
+              <Trash2 className="w-8 h-8"/>
             </Button>
           </div>
         )
