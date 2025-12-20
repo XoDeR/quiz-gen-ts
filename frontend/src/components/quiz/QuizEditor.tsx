@@ -7,8 +7,7 @@ import { CheckCircle2, CheckSquare, Circle, GripVertical, Plus, Square, Trash2, 
 import { Switch } from "../ui/switch";
 import { v4 as uuidv4 } from 'uuid';
 
-type SaveResult =
-  | { success: true; data: any }
+type SaveResult = { success: true; data: any }
   | { success: false; errors: string[] };
 
 // Helper functions to normalize questions data from backend to format used in client

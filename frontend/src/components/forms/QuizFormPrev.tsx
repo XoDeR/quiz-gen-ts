@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useQuiz } from '@/hooks/useQuizzes';
-import type { QuestionViewTodo, QuizResponseOutput } from '@/interfaces';
+import type { QuestionViewTodo } from '@/interfaces';
 import { useCreateSubmission } from '@/hooks/useSubmissions';
 
 type QuizFormValues = Record<string, string | string[]>;
@@ -128,27 +128,25 @@ const MultipleChoiceField: React.FC<MultipleChoiceFieldProps> = ({ question, fie
   );
 };
 
-type SaveResult = { success: true; data: any }
-  | { success: false; errors: string[] };
-
 interface Props {
-  quizData: QuizResponseOutput;
-  onSubmitQuizResult: (result: SaveResult) => void;
-  onSaveForLaterResult: (result: SaveResult) => void;
+  quizId: string;
 };
 
-const QuizForm = ({ 
-  quizData, 
-  onSubmitQuizResult, 
-  onSaveForLaterResult }: Props) => {
-  
+const QuizForm = ({ quizId }: Props) => {
+  const { data: quiz, isLoading, isError, error } = useQuiz(quizId);
+  const createMutation = useCreateSubmission();
   const [formErrorMessage, setFormErrorMessage] = useState("");
+  
+  const createSubmissionOnSuccess = async () => {
+    console.log("Quiz submitted successfully");
+  }
+
+  const saveForLaterOnSuccess = async () => {
+    console.log("Quiz saved successfully");
+  }
 
   const form = useForm({
-    defaultValues: quizData!.questions!.reduce((acc, q) => {
-          acc[q.id] = q.type === 'single' ? '' : []; 
-          return acc;
-      }, {} as QuizFormValues),
+    defaultValues: {},
     onSubmit: async ({ value }) => {
       /*
       // format:
@@ -157,13 +155,13 @@ const QuizForm = ({
         question_id: [answer_option_id, answer_option_id] // for multiple question type
       }
       */
-      if (!quizData || !quizData.questions) {
+      if (!quiz || !quiz.questions) {
         setFormErrorMessage("Nothing to submit. No quiz questions.");
         return;
       }
 
       // validate all fields entered manually
-      const allQuestionsAnswered = quizData.questions.every((q) => {
+      const allQuestionsAnswered = quiz.questions.every((q) => {
         const answer = (value as QuizFormValues)[q.id as keyof QuizFormValues];
         if (q.type === 'multiple') return Array.isArray(answer) && answer.length > 0;
         return !!answer;
@@ -175,13 +173,33 @@ const QuizForm = ({
       }
 
       const dataForCreate = {
+        quizId: quizId,
         completed: true,
         attemptedAnswersData: value,
       };
 
-      onSubmitQuizResult({ success: true, data: dataForCreate });
+      createMutation.mutate(dataForCreate, {
+        onSuccess: createSubmissionOnSuccess,
+      });
     },
   });
+
+  const {reset} = form;
+
+  useEffect(() => {
+    if (quiz?.questions) {
+      const newInitialValues: QuizFormValues = quiz.questions.reduce((acc, q) => {
+          acc[q.id] = q.type === 'single' ? '' : []; 
+          return acc;
+      }, {} as QuizFormValues);
+
+      reset(newInitialValues);
+    }
+  }, [quiz, reset]);
+
+  if (isLoading) return <div>Loading quiz...</div>;
+  if (isError) return <div>Error loading quiz: {error.message}</div>;
+  if (!quiz || !quiz.questions) return <div>Quiz data not found or empty.</div>;
 
   const handleSaveForLater = async () => {
     // validate fields that have values
@@ -211,75 +229,81 @@ const QuizForm = ({
     }
 
     const dataForSave = {
+      quizId: quizId,
       completed: false,
       attemptedAnswersData: filteredAnswers,
     };
 
-    onSaveForLaterResult({ success: true, data: dataForSave })
+    createMutation.mutate(dataForSave, {
+      onSuccess: saveForLaterOnSuccess,
+    });
   }
   
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void form.handleSubmit();
-      }}
-      className="space-y-8"
-    >
-      <FieldGroup >
-        {quizData!.questions!.map((question) => (
-          <form.Field
-            key={question.id}
-            name={question.id as keyof QuizFormValues}
-            validators={{
-              onChange: ({ value }) => {
-                if (formErrorMessage) {
-                  setFormErrorMessage("");
-                }
-                // if the field is empty
-                // it's valid for "Save for later"
-                if (!value || (Array.isArray(value) && value.length === 0)) {
-                  return undefined; 
-                }
-                  
-                if (question.type === 'single' && !value) {
-                  return 'Please select an option.';
-                }
-                if (question.type === 'multiple' && (value as string[]).length === 0) {
-                  return 'Please select at least one option.';
-                }
-                return undefined;
-              },
-            }}
-            children={(field) => (
-              <>
-                {question.type === 'single' ? (
-                  <SingleChoiceField question={question} field={field as unknown as FieldProp} />
-                ) : (
-                  <MultipleChoiceField question={question} field={field as unknown as FieldProp} />
-                )}
-              </>
-            )}
-          />
-        ))}
-      </FieldGroup>
-      
-      {formErrorMessage && (
-        <div className='p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg'>
-          { formErrorMessage }
-        </div>
-      )}
+    <div className="mx-auto max-w-4xl p-8 bg-white shadow-lg rounded-lg">
+      <h1 className="text-3xl font-bold mb-6">{quiz.title}</h1>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void form.handleSubmit();
+        }}
+        className="space-y-8"
+      >
+        <FieldGroup >
+          {quiz.questions.map((question) => (
+            <form.Field
+              key={question.id}
+              name={question.id as keyof QuizFormValues}
+              validators={{
+                onChange: ({ value }) => {
+                  if (formErrorMessage) {
+                    setFormErrorMessage("");
+                  }
+                  // if the field is empty
+                  // it's valid for "Save for later"
+                  if (!value || (Array.isArray(value) && value.length === 0)) {
+                    return undefined; 
+                  }
+                    
+                  if (question.type === 'single' && !value) {
+                    return 'Please select an option.';
+                  }
+                  if (question.type === 'multiple' && (value as string[]).length === 0) {
+                    return 'Please select at least one option.';
+                  }
+                  return undefined;
+                },
+              }}
+              children={(field) => (
+                <>
+                  {question.type === 'single' ? (
+                    <SingleChoiceField question={question} field={field as unknown as FieldProp} />
+                  ) : (
+                    <MultipleChoiceField question={question} field={field as unknown as FieldProp} />
+                  )}
+                </>
+              )}
+            />
+          ))}
+        </FieldGroup>
+        
+        {formErrorMessage && (
+          <div className='p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg'>
+            { formErrorMessage }
+          </div>
+        )}
 
-      <div className="flex justify-between">
-        <Button type="submit" className="">
-          Submit Quiz
-        </Button>
-        <Button type="button" variant="default" className="" onClick={handleSaveForLater}>
-          Save for later
-        </Button>
-      </div>
-    </form>
+        <div className="flex justify-between">
+          <Button type="submit" className="">
+            Submit Quiz
+          </Button>
+          <Button type="button" variant="default" className="" onClick={handleSaveForLater}>
+            Save for later
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };
 

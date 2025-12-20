@@ -22,7 +22,8 @@ export default function CreatedQuizzes() {
     // TODO this should have a param byAuthor
     // View should show questions with correct answers
     // but without options to modify content
-    const path = `/quizzes/${quizId}/view`;
+    const status = "by-author";
+    const path = `/quizzes/${quizId}/view?status=${status}`;
     navigate(path);
   }
 

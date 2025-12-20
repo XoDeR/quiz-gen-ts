@@ -1,5 +1,9 @@
 import QuizForm from '@/components/forms/QuizForm';
 import { useParams, useSearchParams } from 'react-router';
+import QuizViewToDo from '../quiz-view/QuizViewToDo';
+import QuizViewInProgress from '../quiz-view/QuizViewInProgress';
+import QuizViewSubmitted from '../quiz-view/QuizViewSubmitted';
+import QuizViewByAuthor from '../quiz-view/QuizViewByAuthor';
 
 export default function QuizView() {
   const { quizId } = useParams();
@@ -48,24 +52,24 @@ export default function QuizView() {
       <h2>Viewing Quiz ID: {quizId}</h2>
       <p>Status: {quizStatusMessage}</p>
       {isToDoQuiz && (
-        <QuizForm quizId={quizId!} />
+        <QuizViewToDo quizId={quizId!} />
       )}
 
       {isInProgressQuiz && (
         // TODO modify quiz form to prefill data saved in the submission with completed === false
-        <QuizForm quizId={quizId!} />
+        <QuizViewInProgress quizId={quizId!} />
       )}
 
       {isSubmittedQuiz && (
         // TODO create view with div's instead of form and inputs but with the same styling
         // and optional rendering of correct and given answers 
-        <QuizForm quizId={quizId!} />
+        <QuizViewSubmitted quizId={quizId!} />
       )}
 
       {isByAuthorQuiz && (
         // TODO create view with div's instead of form and inputs but with the same styling
         // and optional rendering of correct answers 
-        <QuizForm quizId={quizId!} />
+        <QuizViewByAuthor quizId={quizId!} />
       )}
 
       {!['to-do', 'in-progress', 'submitted', 'by-author'].includes(quizStatus) && (
