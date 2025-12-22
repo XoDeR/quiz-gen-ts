@@ -14,7 +14,10 @@ return new class extends Migration
         Schema::create('answer_options', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique()->index();
-            $table->timestamps();
+            $table->text('text');
+            $table->integer('display_order')->default(0);
+            $table->integer('question_id')->unsigned(); 
+            $table->foreign('question_id')->references('id')->on('questions')->onDelete('cascade');
         });
     }
 

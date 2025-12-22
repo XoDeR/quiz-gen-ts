@@ -54,7 +54,7 @@ questions() -- get all questions; quiz has many questions
 | id                      | id (uuid): string                                                                                           |
 | text                    | text: string                                                                                                |
 | type                    | type: short int , default 0 (0 --single (single choice question); 1 -- multiple (multiple choice question)) |
-| order                   | order: integer, default 0 (order within a quiz)                                                             |
+| display_order           | displayOrder: integer, default 0 (order within a quiz)                                                      |
 | quiz_id (FK id quizzes) | quizId                                                                                                      |
 
 answerOptions() -- get answerOptions for question
@@ -67,7 +67,7 @@ id
 
 text
 
-order
+display_order
 
 question_id
 
