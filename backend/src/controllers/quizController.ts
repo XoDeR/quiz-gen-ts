@@ -92,6 +92,18 @@ export const getQuizById = async (req: Request, res: Response) => {
     questionId?: string;
   }
 
+  interface DBSubmission {
+    id: string;
+    result?: string;
+    completed: boolean;
+  }
+
+  interface DBAttemptedAnswer {
+    id: string;
+    questionId: string;
+    answerOptionId: string;
+  }
+
   interface QuestionOutput {
     id: string;
     text: string;
@@ -107,12 +119,24 @@ export const getQuizById = async (req: Request, res: Response) => {
     }[];
   }
 
+  interface SubmissionOutput {
+    id: string;
+    result?: string;
+    completed: boolean;
+    attemptedAnswers: {
+      id: string;
+      questionId: string;
+      answerOptionId: string;
+    }[];
+  }
+
   interface QuizResponseOutput {
     id: string;
     title: string;
     isPublished: boolean;
     updatedAt: Date;
     questions?: QuestionOutput[];
+    submission?: SubmissionOutput;
   }
 
   interface DBQuestion {
@@ -128,10 +152,14 @@ export const getQuizById = async (req: Request, res: Response) => {
     if (!user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
+
+    const userId = user.id;
     
     const id: string = req.params.id;
     const { withAnswers } = req.query;
     const showCorrectAnswers = withAnswers === "true";
+    const { withSubmision } = req.query;
+    const attachSubmission = withSubmision === "true";
 
     const [quiz] = await sql`
       SELECT id, title, is_published, updated_at
@@ -142,6 +170,8 @@ export const getQuizById = async (req: Request, res: Response) => {
     if (!quiz) {
       return res.status(404).json({ message: 'Quiz not found' });
     }
+
+    const quizId = quiz.id;
 
     const quizResponse: QuizResponseOutput = {
       id: quiz.id,
@@ -218,6 +248,50 @@ export const getQuizById = async (req: Request, res: Response) => {
       });
 
       quizResponse.questions = questionsWithDetails;
+    }
+
+    if (attachSubmission) {
+      const submissions: DBSubmission[] = await sql`
+        SELECT id, title, completed
+        FROM submissions
+        WHERE user_id = ${userId} AND quiz_id = ${quizId}
+        LIMIT 1;
+      ` as DBSubmission[];
+
+      if (submissions.length <= 0 && !submissions[0]) {
+        return res.status(404).json({ message: 'Submission related to quiz not found' });
+      }
+
+      const submission = submissions[0];
+
+      const submissionWithAttemptedAnswers: SubmissionOutput = {
+        id: submission.id,
+        result: submission.result,
+        completed: submission.completed,
+        attemptedAnswers: [],
+      };
+
+      const attemptedAnswers: DBAttemptedAnswer[] = await sql`
+        SELECT 
+          id, 
+          question_id AS "questionId",
+          answer_option_id AS "answerOptionId"
+        FROM attempted_answers
+        WHERE 
+          user_id = ${userId} 
+          AND quiz_id = ${quizId}
+          AND submission_id = ${submission.id}
+      ` as DBAttemptedAnswer[];
+
+      for (const dbAttemptedAnswer of attemptedAnswers) {
+        submissionWithAttemptedAnswers.attemptedAnswers.push({
+          id: dbAttemptedAnswer.id,
+          questionId: dbAttemptedAnswer.questionId,
+          answerOptionId: dbAttemptedAnswer.answerOptionId,
+        });
+      }
+
+      quizResponse.submission = submissionWithAttemptedAnswers;
     }
   
     res.status(200).json(quizResponse);
