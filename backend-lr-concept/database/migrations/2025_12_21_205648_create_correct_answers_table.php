@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('correct_answers', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique()->index();
             $table->timestamps();
         });
     }
