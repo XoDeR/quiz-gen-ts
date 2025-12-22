@@ -59,6 +59,15 @@ const QuizViewToDo = ({ quizId }: Props) => {
         onSubmitQuizResult={handleSubmitQuizResult}
         onSaveForLaterResult={handleSaveForLaterResult}
       />
+      <div className="sticky bottom-0 bg-white/80 backdrop-blur-md border-t border-zinc-200 p-4 -mx-4 sm:-mx-6 lg:-mx-8 mt-10 flex items-center justify-between z-10">
+        {errors.length > 0 && (
+          <div className="text-sm text-red-500 font-medium px-4">
+            {errors.map((err, i) => (
+              <p key={i}>{err}</p>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
