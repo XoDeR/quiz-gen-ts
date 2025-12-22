@@ -59,14 +59,15 @@ export const useCreateQuiz = () => {
   });
 };
 
-export function useQuiz(quizId: string, withAnswers?: boolean) {
+export function useQuiz(quizId: string, withAnswers?: boolean, withSubmission?: boolean) {
   return useQuery<QuizResponseOutput, Error>({
-    queryKey: ['quizzes', quizId, {withAnswers}],
+    queryKey: ['quizzes', quizId, {withAnswers, withSubmission}],
     queryFn: async () => {
       const url = `/quizzes/${quizId}`;
       const res = await api.protected.get(url, {
         params: {
           withAnswers,
+          withSubmission,
         }
       });
       if (res.status !== 200) {

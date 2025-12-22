@@ -1,7 +1,7 @@
 // queries:
 //  useQuiz params: none
 // mutations: 
-//    useCreateSubmission
+//    useCreateSubmission with completed true | false
 
 import QuizForm from "@/components/forms/QuizForm";
 import { useQuiz } from "@/hooks/useQuizzes";
