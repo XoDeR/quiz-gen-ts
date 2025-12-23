@@ -252,7 +252,7 @@ export const getQuizById = async (req: Request, res: Response) => {
 
     if (attachSubmission) {
       const submissions: DBSubmission[] = await sql`
-        SELECT id, title, completed
+        SELECT id, result, completed
         FROM submissions
         WHERE user_id = ${userId} AND quiz_id = ${quizId}
         LIMIT 1;
