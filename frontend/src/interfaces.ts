@@ -116,10 +116,22 @@ export interface QuestionOutput {
   }[];
 }
 
+export interface SubmissionOutput {
+  id: string;
+  result?: string;
+  completed: boolean;
+  attemptedAnswers: {
+    id: string;
+    questionId: string;
+    answerOptionId: string;
+  }[];
+}
+
 export interface QuizResponseOutput {
   id: string;
     title: string;
     isPublished: boolean;
     updatedAt: Date;
     questions?: QuestionOutput[];
+    submission?: SubmissionOutput;
 }

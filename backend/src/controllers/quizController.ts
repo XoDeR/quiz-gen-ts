@@ -158,8 +158,8 @@ export const getQuizById = async (req: Request, res: Response) => {
     const id: string = req.params.id;
     const { withAnswers } = req.query;
     const showCorrectAnswers = withAnswers === "true";
-    const { withSubmision } = req.query;
-    const attachSubmission = withSubmision === "true";
+    const { withSubmission } = req.query;
+    const attachSubmission = withSubmission === "true";
 
     const [quiz] = await sql`
       SELECT id, title, is_published, updated_at

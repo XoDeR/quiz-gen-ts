@@ -50,6 +50,8 @@ const QuizViewInProgress = ({ quizId }: Props) => {
   if (isError) return <div>Error loading quiz: {error.message}</div>;
   if (!quiz || !quiz.questions) return <div>Quiz data not found or empty.</div>;
 
+  console.log("quiz", quiz);
+  
   return (
     <div className="mx-auto max-w-4xl p-8 bg-white shadow-lg rounded-lg">
       <h1 className="text-3xl font-bold mb-6">{quiz.title}</h1>
