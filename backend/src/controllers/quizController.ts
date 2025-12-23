@@ -295,7 +295,20 @@ export const getQuizById = async (req: Request, res: Response) => {
     }
   
     res.status(200).json(quizResponse);
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Error fetching quizzes:");
+    console.error("Message:", error.message);
+    console.error("Stack:", error.stack);
+
+    if (error.code) {
+      console.error("Postgres error code:", error.code);
+    }
+    if (error.detail) {
+      console.error("Detail:", error.detail);
+    }
+    if (error.hint) {
+      console.error("Hint:", error.hint);
+    }
     res.status(500).json({ error: "Server error" });
   }
 };
