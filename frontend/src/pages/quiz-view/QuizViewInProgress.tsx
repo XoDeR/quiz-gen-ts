@@ -7,6 +7,7 @@ import QuizForm from "@/components/forms/QuizForm";
 import { useQuiz } from "@/hooks/useQuizzes";
 import { useCreateSubmission } from "@/hooks/useSubmissions";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 interface Props {
   quizId: string;
@@ -15,6 +16,7 @@ interface Props {
 const QuizViewInProgress = ({ quizId }: Props) => {
   const { data: quiz, isLoading, isError, error } = useQuiz(quizId, false, true);
   const createMutation = useCreateSubmission();
+  const navigate = useNavigate();
 
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -40,18 +42,22 @@ const QuizViewInProgress = ({ quizId }: Props) => {
 
   const createSubmissionOnSuccess = async () => {
     console.log("Quiz submitted successfully");
+
+    const path = `/`;
+    navigate(path);
   }
 
   const saveForLaterOnSuccess = async () => {
     console.log("Quiz saved successfully");
+
+    const path = `/`;
+    navigate(path);
   }
 
   if (isLoading) return <div>Loading quiz...</div>;
   if (isError) return <div>Error loading quiz: {error.message}</div>;
   if (!quiz || !quiz.questions) return <div>Quiz data not found or empty.</div>;
 
-  console.log("quiz", quiz);
-  
   return (
     <div className="mx-auto max-w-4xl p-8 bg-white shadow-lg rounded-lg">
       <h1 className="text-3xl font-bold mb-6">{quiz.title}</h1>

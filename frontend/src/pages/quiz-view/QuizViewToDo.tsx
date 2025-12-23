@@ -7,6 +7,7 @@ import QuizForm from "@/components/forms/QuizForm";
 import { useQuiz } from "@/hooks/useQuizzes";
 import { useCreateSubmission } from "@/hooks/useSubmissions";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 const QuizViewToDo = ({ quizId }: Props) => {
   const { data: quiz, isLoading, isError, error } = useQuiz(quizId);
   const createMutation = useCreateSubmission();
+  const navigate = useNavigate();
 
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -41,10 +43,16 @@ const QuizViewToDo = ({ quizId }: Props) => {
 
   const createSubmissionOnSuccess = async () => {
     console.log("Quiz submitted successfully");
+
+    const path = `/`;
+    navigate(path);
   }
 
   const saveForLaterOnSuccess = async () => {
     console.log("Quiz saved successfully");
+
+    const path = `/`;
+    navigate(path);
   }
 
   if (isLoading) return <div>Loading quiz...</div>;
