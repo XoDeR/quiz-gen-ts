@@ -13,9 +13,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useQuiz } from '@/hooks/useQuizzes';
 import type { QuestionViewTodo, QuizResponseOutput } from '@/interfaces';
-import { useCreateSubmission } from '@/hooks/useSubmissions';
 
 type QuizFormValues = Record<string, string | string[]>;
 
@@ -146,7 +144,9 @@ const QuizForm = ({
 
   const form = useForm({
     defaultValues: quizData!.questions!.reduce((acc, q) => {
-          acc[q.id] = q.type === 'single' ? '' : []; 
+          acc[q.id] = q.type === 'single' 
+            ? quizData.submission?.attemptedAnswers.filter((aa) => aa.questionId === q.id)[0].answerOptionId || ""
+            : quizData.submission?.attemptedAnswers.filter((aa) => aa.questionId === q.id).map((aa) => aa.answerOptionId) || []; 
           return acc;
       }, {} as QuizFormValues),
     onSubmit: async ({ value }) => {
